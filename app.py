@@ -143,7 +143,7 @@ def attention_check_step():
 
     st.markdown("</div>", unsafe_allow_html=True)
 
-        if st.button("Next"):
+    if st.button("Next"):
         # Save the response
         response = {
             "timestamp": datetime.utcnow().isoformat(),
