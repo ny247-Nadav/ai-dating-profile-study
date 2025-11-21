@@ -1,0 +1,11 @@
+timestamp,participant_id,age,gender,attraction,profile_id,condition,attractiveness,authenticity,desirability
+2025-11-21T01:28:50.446935,aaa,24,Woman,Men,p14,ai_disclosed,3,1,4
+2025-11-21T01:28:54.120135,aaa,24,Woman,Men,p16,control,3,1,4
+2025-11-21T01:28:57.054843,aaa,24,Woman,Men,p1,control,3,1,1
+2025-11-21T01:30:24.255795,aaa,24,Woman,Men,p6,ai_disclosed,3,1,1
+2025-11-21T01:30:26.632475,aaa,24,Woman,Men,p13,control,3,0,1
+2025-11-21T01:30:29.519492,aaa,24,Woman,Men,p10,control,3,0,3
+2025-11-21T01:30:31.778948,aaa,24,Woman,Men,p20,control,1,0,3
+2025-11-21T01:30:35.036018,aaa,24,Woman,Men,p4,ai_disclosed,4,0,3
+2025-11-21T01:30:37.202918,aaa,24,Woman,Men,p2,ai_disclosed,4,4,3
+2025-11-21T01:30:39.469715,aaa,24,Woman,Men,p15,ai_disclosed,4,4,4
