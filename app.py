@@ -1,6 +1,7 @@
 import streamlit as st
 import random
 from datetime import datetime
+import streamlit.components.v1 as components  
 
 # NOTE: using stimuly.py (your filename)
 from stimuly import build_profiles, NUM_PROFILES_PER_PARTICIPANT
@@ -142,7 +143,8 @@ def attention_check_step():
 
     st.markdown("</div>", unsafe_allow_html=True)
 
-    if st.button("Next"):
+        if st.button("Next"):
+        # Save the response
         response = {
             "timestamp": datetime.utcnow().isoformat(),
             "participant_id": st.session_state.participant_id,
@@ -159,8 +161,20 @@ def attention_check_step():
         }
         st.session_state.responses.append(response)
         append_response_to_sheet(response)
+
+        # 🔥 scroll BEFORE rerun (required for Streamlit Cloud)
+        components.html(
+            """
+            <script>
+            window.parent.scrollTo({top: 0, behavior: 'auto'});
+            </script>
+            """,
+            height=0,
+        )
+
         st.session_state.current_index += 1
         st.rerun()
+
 
     st.stop()
 
@@ -248,8 +262,20 @@ def profile_step(profile_idx: int, stimuli, total_profiles: int):
         }
         st.session_state.responses.append(response)
         append_response_to_sheet(response)
+
+        # scroll BEFORE rerun
+        components.html(
+            """
+            <script>
+            window.parent.scrollTo({top: 0, behavior: 'auto'});
+            </script>
+            """,
+            height=0,
+        )
+
         st.session_state.current_index += 1
         st.rerun()
+
 
 
 # ---------- Main Experiment Flow ----------
