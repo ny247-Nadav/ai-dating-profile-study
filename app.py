@@ -10,6 +10,56 @@ st.set_page_config(
     layout="centered"
 )
 
+# ---------- Global Styling ----------
+
+st.markdown(
+    """
+    <style>
+    .main {
+        max-width: 900px;
+        margin: 0 auto;
+        font-size: 18px;
+    }
+    .big-title {
+        font-size: 32px !important;
+        font-weight: 700 !important;
+    }
+    .section-header {
+        font-size: 24px !important;
+        font-weight: 600 !important;
+        margin-top: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+    .rating-title {
+        font-size: 22px !important;
+        font-weight: 600 !important;
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
+    }
+    .ai-label {
+        color: #1f6feb;
+        font-weight: 700;
+        font-size: 18px;
+        padding: 0.4rem 0.6rem;
+        border-radius: 6px;
+        background-color: #e8f0ff;
+        display: inline-block;
+        margin-top: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    .min-max-labels {
+        display: flex;
+        justify-content: space-between;
+        font-size: 14px;
+        color: #555;
+        margin-top: -8px;
+        margin-bottom: 4px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 # ---------- 1. Define Stimuli ----------
 
 IMAGE_URL = "https://fortune.com/img-assets/wp-content/uploads/2025/05/GettyImages-2215203788-e1747765808923.jpg?w=1440&q=75"
@@ -47,7 +97,7 @@ init_session()
 # ---------- 3. Consent / Start Screen ----------
 
 if st.session_state.participant_id is None:
-    st.title("AI in Dating Profiles Study 💘")
+    st.markdown('<div class="big-title">AI in Dating Profiles Study 💘</div>', unsafe_allow_html=True)
 
     st.markdown("""
     **Consent & Study Info**
@@ -56,29 +106,26 @@ if st.session_state.participant_id is None:
     and AI-assisted content. You will see a series of fictional dating profiles and
     rate how attractive, authentic, and desirable you find them.
 
-    - The study should take about **5–10 minutes**.
-    - Participation is **voluntary** and **anonymous**.
+    - The study should take about **5–10 minutes**.  
+    - Participation is **voluntary** and **anonymous**.  
     - You may stop at any time by closing this window.
 
     If you agree to participate, please continue below.
     """)
 
     agree = st.checkbox("I have read the information above and agree to participate.")
-    if agree:
-        pid = st.text_input(
-            "Please create a simple participant ID (e.g., your initials + 3 digits):"
-        )
-
-        if pid:
-            st.session_state.participant_id = pid.strip()
-            st.rerun()
+    if agree and st.button("Start the study"):
+        # Auto-generate a participant ID
+        unique_id = f"PID_{int(datetime.utcnow().timestamp())}_{random.randint(1000, 9999)}"
+        st.session_state.participant_id = unique_id
+        st.rerun()
 
     st.stop()
 
 # ---------- 4. Demographics Screen ----------
 
 if st.session_state.demographics is None:
-    st.header("A few quick questions")
+    st.markdown('<div class="section-header">A few quick questions</div>', unsafe_allow_html=True)
 
     age = st.number_input("Age", min_value=18, max_value=99, step=1, value=24)
     gender = st.selectbox(
@@ -133,6 +180,7 @@ if not stimuli:
     st.error("No stimuli available. Please reload the page.")
     st.stop()
 
+# Finished all stimuli
 if idx >= len(stimuli):
     st.success("Thank you! You have completed all profiles. You may close this window now.")
 
@@ -149,23 +197,83 @@ if idx >= len(stimuli):
 
 current = stimuli[idx]
 
-st.write(f"Profile {idx + 1} of {len(stimuli)}")
+# ---------- Progress Bar ----------
+st.write(f"Progress: {idx+1} / {len(stimuli)}")
+progress = (idx + 1) / len(stimuli)
+st.progress(progress)
+
+# ---------- Attention Check at Profile 4 (idx == 3) ----------
+if idx == 3:
+    st.markdown("### Attention Check ⚠️")
+    st.write("""
+    To confirm you're paying attention,  
+    **please select the rating '3' for all three questions below.**
+    """)
+
+    att1 = st.slider("Attractiveness", 0, 4, 2, key="attn_attr", label_visibility="collapsed")
+    st.markdown('<div class="min-max-labels"><span>0</span><span>4</span></div>', unsafe_allow_html=True)
+
+    att2 = st.slider("Authenticity", 0, 4, 2, key="attn_auth", label_visibility="collapsed")
+    st.markdown('<div class="min-max-labels"><span>0</span><span>4</span></div>', unsafe_allow_html=True)
+
+    att3 = st.slider("Desirability", 0, 4, 2, key="attn_desi", label_visibility="collapsed")
+    st.markdown('<div class="min-max-labels"><span>0</span><span>4</span></div>', unsafe_allow_html=True)
+
+    if st.button("Next"):
+        response = {
+            "timestamp": datetime.utcnow().isoformat(),
+            "participant_id": st.session_state.participant_id,
+            "age": st.session_state.demographics["age"],
+            "gender": st.session_state.demographics["gender"],
+            "attraction": "|".join(st.session_state.demographics["attraction"]),
+            "profile_id": "attention_check",
+            "condition": "attention_check",
+            "attractiveness": att1,
+            "authenticity": att2,
+            "desirability": att3,
+            "attention_correct": (att1 == 3 and att2 == 3 and att3 == 3),
+        }
+        st.session_state.responses.append(response)
+        st.session_state.current_index += 1
+        st.rerun()
+
+    st.stop()
+
+# ---------- Regular Profile Rating ----------
+
+st.markdown(f"**Profile {idx + 1} of {len(stimuli)}**")
 
 # Show image (same for all)
 if current["image_url"]:
-    st.image(current["image_url"], use_column_width=True)
+    st.image(current["image_url"], use_container_width=True)
 
 st.markdown(f"**Bio:** {current['bio']}")
 
 if current["condition"] == "ai_disclosed":
-    st.markdown("> 🔍 *This profile includes AI-assisted enhancements.*")
+    st.markdown(
+        '<div class="ai-label">✨ <strong>This profile includes AI-assisted enhancements.</strong> ✨</div>',
+        unsafe_allow_html=True,
+    )
 
 st.markdown("---")
-st.subheader("Please rate this profile")
 
-attr = st.slider("Attractiveness (0 = not at all, 4 = very much)", 0, 4, 2)
-auth = st.slider("Authenticity (0–4)", 0, 4, 2)
-desi = st.slider("Desirability (0–4)", 0, 4, 2)
+st.markdown(
+    '<div class="rating-title">Please rate this profile (0 = not at all, 4 = very much)</div>',
+    unsafe_allow_html=True,
+)
+
+# Sliders with forced reset (key = profile index)
+st.markdown("**Attractiveness**")
+attr = st.slider("Attractiveness", 0, 4, 2, key=f"attr_{idx}", label_visibility="collapsed")
+st.markdown('<div class="min-max-labels"><span>0</span><span>4</span></div>', unsafe_allow_html=True)
+
+st.markdown("**Authenticity**")
+auth = st.slider("Authenticity", 0, 4, 2, key=f"auth_{idx}", label_visibility="collapsed")
+st.markdown('<div class="min-max-labels"><span>0</span><span>4</span></div>', unsafe_allow_html=True)
+
+st.markdown("**Desirability**")
+desi = st.slider("Desirability", 0, 4, 2, key=f"desi_{idx}", label_visibility="collapsed")
+st.markdown('<div class="min-max-labels"><span>0</span><span>4</span></div>', unsafe_allow_html=True)
 
 if st.button("Next"):
     response = {
