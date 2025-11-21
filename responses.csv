@@ -9,3 +9,13 @@ timestamp,participant_id,age,gender,attraction,profile_id,condition,attractivene
 2025-11-21T01:30:35.036018,aaa,24,Woman,Men,p4,ai_disclosed,4,0,3
 2025-11-21T01:30:37.202918,aaa,24,Woman,Men,p2,ai_disclosed,4,4,3
 2025-11-21T01:30:39.469715,aaa,24,Woman,Men,p15,ai_disclosed,4,4,4
+2025-11-21T01:39:15.837866,PID_1763707142_9790,24,Woman,Non-binary people,p14,control,1,3,2,
+2025-11-21T01:39:21.439970,PID_1763707142_9790,24,Woman,Non-binary people,p12,ai_disclosed,4,4,4,
+2025-11-21T01:39:26.440161,PID_1763707142_9790,24,Woman,Non-binary people,p6,ai_disclosed,0,1,3,
+2025-11-21T01:39:34.231785,PID_1763707142_9790,24,Woman,Non-binary people,attention_check,attention_check,3,3,3,True
+2025-11-21T01:39:36.426265,PID_1763707142_9790,24,Woman,Non-binary people,p8,control,2,2,2,
+2025-11-21T01:39:37.335063,PID_1763707142_9790,24,Woman,Non-binary people,p11,ai_disclosed,2,2,2,
+2025-11-21T01:39:38.200239,PID_1763707142_9790,24,Woman,Non-binary people,p2,control,2,2,2,
+2025-11-21T01:39:38.943068,PID_1763707142_9790,24,Woman,Non-binary people,p19,control,2,2,2,
+2025-11-21T01:39:39.627564,PID_1763707142_9790,24,Woman,Non-binary people,p16,control,2,2,2,
+2025-11-21T01:39:42.003302,PID_1763707142_9790,24,Woman,Non-binary people,p4,ai_disclosed,2,1,2,
