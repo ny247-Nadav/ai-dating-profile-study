@@ -123,12 +123,13 @@ def demographics_screen():
 def attention_check_step():
     # Scroll to top at the start of this step
     scroll_to_top()
-
     st.markdown("### Attention Check ⚠️")
     st.write("""
     To confirm you're paying attention,  
     **please select the rating '3' for all three questions below.**
     """)
+
+    st.markdown('<div class="profile-card">', unsafe_allow_html=True)
 
     att1 = st.slider("Attractiveness", 0, 4, 2, key="attn_attr", label_visibility="collapsed")
     st.markdown('<div class="min-max-labels"><span>0</span><span>4</span></div>', unsafe_allow_html=True)
@@ -138,6 +139,8 @@ def attention_check_step():
 
     att3 = st.slider("Desirability", 0, 4, 2, key="attn_desi", label_visibility="collapsed")
     st.markdown('<div class="min-max-labels"><span>0</span><span>4</span></div>', unsafe_allow_html=True)
+
+    st.markdown("</div>", unsafe_allow_html=True)
 
     if st.button("Next"):
         response = {
@@ -173,16 +176,29 @@ def profile_step(profile_idx: int, stimuli, total_profiles: int):
     # Profile counter: 1..10 (profiles only)
     st.markdown(f"**Profile {profile_idx + 1} of {total_profiles}**")
 
-    if current["image_url"]:
-        st.image(current["image_url"], use_container_width=True)
+    # ---- Profile card block ----
+    with st.container():
+        st.markdown('<div class="profile-card">', unsafe_allow_html=True)
 
-    st.markdown(f"**Bio:** {current['bio']}")
+        if current["image_url"]:
+            st.image(current["image_url"], use_container_width=True)
 
-    if current["condition"] == "ai_disclosed":
+        # Bio
         st.markdown(
-            '<div class="ai-label">✨ <strong>This profile includes AI-assisted enhancements.</strong> ✨</div>',
+            f'<div class="profile-bio-label">Bio:</div>'
+            f'<div class="profile-bio-text">{current["bio"]}</div>',
             unsafe_allow_html=True,
         )
+
+        # AI label (only for treatment condition)
+        if current["condition"] == "ai_disclosed":
+            st.markdown(
+                '<div class="ai-label">This profile includes AI-assisted enhancements.</div>',
+                unsafe_allow_html=True,
+            )
+
+        st.markdown("</div>", unsafe_allow_html=True)
+    # ---- end card ----
 
     st.markdown("---")
     st.markdown(
@@ -190,16 +206,29 @@ def profile_step(profile_idx: int, stimuli, total_profiles: int):
         unsafe_allow_html=True,
     )
 
+    # Sliders (start at 2 each time)
     st.markdown("**Attractiveness**")
-    attr = st.slider("Attractiveness", 0, 4, 2, key=f"attr_{profile_idx}", label_visibility="collapsed")
+    attr = st.slider(
+        "Attractiveness", 0, 4, 2,
+        key=f"attr_{profile_idx}",
+        label_visibility="collapsed",
+    )
     st.markdown('<div class="min-max-labels"><span>0</span><span>4</span></div>', unsafe_allow_html=True)
 
     st.markdown("**Authenticity**")
-    auth = st.slider("Authenticity", 0, 4, 2, key=f"auth_{profile_idx}", label_visibility="collapsed")
+    auth = st.slider(
+        "Authenticity", 0, 4, 2,
+        key=f"auth_{profile_idx}",
+        label_visibility="collapsed",
+    )
     st.markdown('<div class="min-max-labels"><span>0</span><span>4</span></div>', unsafe_allow_html=True)
 
     st.markdown("**Desirability**")
-    desi = st.slider("Desirability", 0, 4, 2, key=f"desi_{profile_idx}", label_visibility="collapsed")
+    desi = st.slider(
+        "Desirability", 0, 4, 2,
+        key=f"desi_{profile_idx}",
+        label_visibility="collapsed",
+    )
     st.markdown('<div class="min-max-labels"><span>0</span><span>4</span></div>', unsafe_allow_html=True)
 
     if st.button("Next"):
