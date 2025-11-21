@@ -235,10 +235,14 @@ if not stimuli:
     st.stop()
 
 # Finished all stimuli
-if idx >= len(stimuli):
+total_steps = len(stimuli) + 1  # +1 for the attention check
+
+# Finished all steps (10 profiles + 1 attention check)
+if idx >= total_steps:
     st.success("Thank you! You have completed all profiles. You may close this window now.")
     st.write("Your responses have been recorded.")
     st.stop()
+
 
 current = stimuli[idx]
 
@@ -254,9 +258,21 @@ st.markdown(
 
 # ---------- Progress Bar ----------
 
-st.write(f"Progress: {idx + 1} / {len(stimuli)}")
-progress = (idx + 1) / len(stimuli)
+total_steps = len(stimuli) + 1  # 10 profiles + 1 attention check
+
+# Map idx (0..10) to profile index (0..9), skipping idx == 3 for attention check
+if idx < 3:
+    profile_idx = idx               # show profiles 0,1,2
+elif idx == 3:
+    profile_idx = None              # attention check, no profile
+else:
+    profile_idx = idx - 1           # idx 4..10 → profiles 3..9
+
+# ---------- Progress Bar ----------
+st.write(f"Progress: {idx + 1} / {total_steps}")
+progress = (idx + 1) / total_steps
 st.progress(progress)
+
 
 # ---------- Attention Check at Profile 4 (idx == 3) ----------
 
@@ -300,55 +316,62 @@ if idx == 3:
 
 # ---------- Regular Profile Rating ----------
 
-st.markdown(f"**Profile {idx + 1} of {len(stimuli)}**")
+# ---------- Regular Profile Rating ----------
 
-if current["image_url"]:
-    st.image(current["image_url"], use_container_width=True)
+# Only run this block when we're not on the attention check
+if profile_idx is not None:
+    current = stimuli[profile_idx]
 
-st.markdown(f"**Bio:** {current['bio']}")
+    # Display profile counter out of 10 (profiles only)
+    st.markdown(f"**Profile {profile_idx + 1} of {len(stimuli)}**")
 
-if current["condition"] == "ai_disclosed":
+    if current["image_url"]:
+        st.image(current["image_url"], use_container_width=True)
+
+    st.markdown(f"**Bio:** {current['bio']}")
+
+    if current["condition"] == "ai_disclosed":
+        st.markdown(
+            '<div class="ai-label">✨ <strong>This profile includes AI-assisted enhancements.</strong> ✨</div>',
+            unsafe_allow_html=True,
+        )
+
+    st.markdown("---")
+
     st.markdown(
-        '<div class="ai-label">✨ <strong>This profile includes AI-assisted enhancements.</strong> ✨</div>',
+        '<div class="rating-title">Please rate this profile (0 = not at all, 4 = very much)</div>',
         unsafe_allow_html=True,
     )
 
-st.markdown("---")
+    # Sliders with forced reset (key = profile index)
+    st.markdown("**Attractiveness**")
+    attr = st.slider("Attractiveness", 0, 4, 2, key=f"attr_{profile_idx}", label_visibility="collapsed")
+    st.markdown('<div class="min-max-labels"><span>0</span><span>4</span></div>', unsafe_allow_html=True)
 
-st.markdown(
-    '<div class="rating-title">Please rate this profile (0 = not at all, 4 = very much)</div>',
-    unsafe_allow_html=True,
-)
+    st.markdown("**Authenticity**")
+    auth = st.slider("Authenticity", 0, 4, 2, key=f"auth_{profile_idx}", label_visibility="collapsed")
+    st.markdown('<div class="min-max-labels"><span>0</span><span>4</span></div>', unsafe_allow_html=True)
 
-# Sliders with forced reset (key = profile index)
-st.markdown("**Attractiveness**")
-attr = st.slider("Attractiveness", 0, 4, 2, key=f"attr_{idx}", label_visibility="collapsed")
-st.markdown('<div class="min-max-labels"><span>0</span><span>4</span></div>', unsafe_allow_html=True)
+    st.markdown("**Desirability**")
+    desi = st.slider("Desirability", 0, 4, 2, key=f"desi_{profile_idx}", label_visibility="collapsed")
+    st.markdown('<div class="min-max-labels"><span>0</span><span>4</span></div>', unsafe_allow_html=True)
 
-st.markdown("**Authenticity**")
-auth = st.slider("Authenticity", 0, 4, 2, key=f"auth_{idx}", label_visibility="collapsed")
-st.markdown('<div class="min-max-labels"><span>0</span><span>4</span></div>', unsafe_allow_html=True)
-
-st.markdown("**Desirability**")
-desi = st.slider("Desirability", 0, 4, 2, key=f"desi_{idx}", label_visibility="collapsed")
-st.markdown('<div class="min-max-labels"><span>0</span><span>4</span></div>', unsafe_allow_html=True)
-
-if st.button("Next"):
-    response = {
-        "timestamp": datetime.utcnow().isoformat(),
-        "participant_id": st.session_state.participant_id,
-        "age": st.session_state.demographics["age"],
-        "gender": st.session_state.demographics["gender"],
-        "attraction": st.session_state.demographics["attraction"],
-        "profile_id": current["profile_id"],
-        "condition": current["condition"],
-        "attractiveness": attr,
-        "authenticity": auth,
-        "desirability": desi,
-        "attention_check": False,
-        "attention_correct": "",
-    }
-    st.session_state.responses.append(response)
-    append_response_to_sheet(response)
-    st.session_state.current_index += 1
-    st.rerun()
+    if st.button("Next"):
+        response = {
+            "timestamp": datetime.utcnow().isoformat(),
+            "participant_id": st.session_state.participant_id,
+            "age": st.session_state.demographics["age"],
+            "gender": st.session_state.demographics["gender"],
+            "attraction": st.session_state.demographics["attraction"],
+            "profile_id": current["profile_id"],
+            "condition": current["condition"],
+            "attractiveness": attr,
+            "authenticity": auth,
+            "desirability": desi,
+            "attention_check": False,
+            "attention_correct": "",
+        }
+        st.session_state.responses.append(response)
+        append_response_to_sheet(response)
+        st.session_state.current_index += 1
+        st.rerun()
