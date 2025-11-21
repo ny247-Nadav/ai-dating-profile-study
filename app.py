@@ -1,9 +1,10 @@
 import streamlit as st
 import random
-import pandas as pd
 from datetime import datetime
-import gspread
-from google.oauth2.service_account import Credentials
+
+from stimuli import build_profiles, NUM_PROFILES_PER_PARTICIPANT
+from sheets_utils import append_response_to_sheet
+from ui_helpers import apply_global_styles, scroll_to_top, show_progress
 
 st.set_page_config(
     page_title="AI Dating Profile Study",
@@ -11,97 +12,10 @@ st.set_page_config(
     layout="centered"
 )
 
-# ---------- Global Styling ----------
+apply_global_styles()
 
-st.markdown(
-    """
-    <style>
-    .main {
-        max-width: 900px;
-        margin: 0 auto;
-        font-size: 18px;
-    }
-    .big-title {
-        font-size: 32px !important;
-        font-weight: 700 !important;
-    }
-    .section-header {
-        font-size: 24px !important;
-        font-weight: 600 !important;
-        margin-top: 1.5rem;
-        margin-bottom: 0.5rem;
-    }
-    .rating-title {
-        font-size: 22px !important;
-        font-weight: 600 !important;
-        margin-top: 1rem;
-        margin-bottom: 0.5rem;
-    }
-    .ai-label {
-        color: #1f6feb;
-        font-weight: 700;
-        font-size: 18px;
-        padding: 0.4rem 0.6rem;
-        border-radius: 6px;
-        background-color: #e8f0ff;
-        display: inline-block;
-        margin-top: 0.5rem;
-        margin-bottom: 0.5rem;
-    }
-    .min-max-labels {
-        display: flex;
-        justify-content: space-between;
-        font-size: 14px;
-        color: #555;
-        margin-top: -8px;
-        margin-bottom: 4px;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
 
-# ---------- 1. Define Stimuli ----------
-
-IMAGE_URL = "https://fortune.com/img-assets/wp-content/uploads/2025/05/GettyImages-2215203788-e1747765808923.jpg?w=1440&q=75"
-
-BIOS = [
-    "Teacher by day, amateur chef by night. I love quiet coffee shops, long walks, and Sunday brunch with friends. Looking for someone kind, grounded, and ready to laugh at bad puns.",
-    "Tech worker who escapes screens with books, live music, and weekend hikes. I value honesty, curiosity, and good communication. Let’s see if we can make each other’s playlists better.",
-    "NYC transplant who still gets excited about the skyline. Into movies, board games, and exploring new neighborhoods. Looking for a caring partner who enjoys both going out and staying in.",
-    "Big fan of cozy dinners, wandering through museums, and talking about everything from podcasts to politics. Friends describe me as thoughtful, reliable, and a good listener.",
-    "Fitness is my reset button—runs in the park, yoga classes, and trying new healthy recipes. I’m looking for someone warm, supportive, and open-minded about life and relationships.",
-    "I love hosting friends, making way too much pasta, and discovering small local spots. Family and close friendships are a big part of my life. Looking for someone genuine and kind.",
-    "Book lover, plant caretaker, and frequent movie re-watcher. I appreciate people who are emotionally mature, honest, and not afraid of real conversations.",
-    "Weekdays are busy with work, but I always make time for friends, music, and good food. I’m hoping to meet someone who is thoughtful, affectionate, and looking for something real.",
-    "I’m a mix of introvert and extrovert: I love evenings out with friends but also love quiet nights in. Looking for someone respectful, communicative, and emotionally intelligent.",
-    "I enjoy traveling when I can, but I’m just as happy discovering new corners of my own city. I value kindness, stability, and a shared sense of humor.",
-    "I’m close with my family and deeply value loyalty and support. My ideal evening is cooking together, sharing stories, and finding reasons to laugh about the day.",
-    "Curious by nature—I love learning new things, whether it’s a recipe, a podcast topic, or a new neighborhood. Looking for a partner who is kind, patient, and open-hearted.",
-    "Concerts, bookstores, and late-night conversations are my favorite kind of weekend. I appreciate people who are sincere, steady, and comfortable being themselves.",
-    "I’m pretty grounded: I enjoy my work, take care of my people, and make time for small joys like coffee walks and sunsets. Hoping to meet someone who feels the same.",
-    "I like to keep things balanced: staying active, seeing friends, and leaving space to just breathe. Looking for someone caring, thoughtful, and emotionally aware.",
-    "I love trying new restaurants, discovering hidden parks, and planning small getaways. My ideal match is empathetic, communicative, and ready to build something meaningful.",
-    "Friends would say I’m reliable, easygoing, and quietly funny. I’m happiest when I’m with good company, sharing food, stories, or a show we’re both into.",
-    "I’m drawn to people who are honest, kind, and a little playful. I enjoy simple things: walks, coffee dates, and evenings where the conversation just flows.",
-    "I like a slow morning, a good playlist, and a day that includes at least one small adventure. Looking for someone who is genuine, caring, and interested in a real connection.",
-    "Life is busy but I try to prioritize what matters: relationships, health, and learning. If you’re thoughtful, kind, and ready for something sincere, we might get along well.",
-]
-
-# 20 profiles with same image + different bios
-PROFILES = [
-    {
-        "profile_id": f"p{i}",
-        "gender": "unspecified",
-        "image_url": IMAGE_URL,
-        "bio": BIOS[i - 1],
-    }
-    for i in range(1, 21)
-]
-
-NUM_PROFILES_PER_PARTICIPANT = 10   # 10 real profiles in total
-
-# ---------- 2. Init session state ----------
+# ---------- Session Init ----------
 
 def init_session():
     if "participant_id" not in st.session_state:
@@ -115,44 +29,16 @@ def init_session():
     if "responses" not in st.session_state:
         st.session_state.responses = []
 
+
 init_session()
 
-# ---------- 3. Google Sheets Helpers ----------
 
-def get_worksheet():
-    """Connect to the first worksheet in the Google Sheet using service account secrets."""
-    service_info = st.secrets["gcp_service_account"]
-    scopes = ["https://www.googleapis.com/auth/spreadsheets"]
-    creds = Credentials.from_service_account_info(service_info, scopes=scopes)
-    client = gspread.authorize(creds)
-    sheet_id = service_info["sheet_id"]
-    return client.open_by_key(sheet_id).sheet1
+# ---------- Consent Screen ----------
 
-def append_response_to_sheet(row_dict):
-    """
-    Append a single response row to Google Sheets.
-    The order here must match the header row in the sheet.
-    """
-    ws = get_worksheet()
-    row = [
-        row_dict.get("timestamp", ""),
-        row_dict.get("participant_id", ""),
-        row_dict.get("age", ""),
-        row_dict.get("gender", ""),
-        row_dict.get("attraction", ""),
-        row_dict.get("profile_id", ""),
-        row_dict.get("condition", ""),
-        row_dict.get("attractiveness", ""),
-        row_dict.get("authenticity", ""),
-        row_dict.get("desirability", ""),
-        row_dict.get("attention_check", ""),
-        row_dict.get("attention_correct", ""),
-    ]
-    ws.append_row(row, value_input_option="RAW")
+def consent_screen():
+    if st.session_state.participant_id is not None:
+        return
 
-# ---------- 4. Consent / Start Screen ----------
-
-if st.session_state.participant_id is None:
     st.markdown('<div class="big-title">AI in Dating Profiles Study 💘</div>', unsafe_allow_html=True)
 
     st.markdown("""
@@ -177,9 +63,13 @@ if st.session_state.participant_id is None:
 
     st.stop()
 
-# ---------- 5. Demographics Screen ----------
 
-if st.session_state.demographics is None:
+# ---------- Demographics Screen ----------
+
+def demographics_screen():
+    if st.session_state.demographics is not None:
+        return
+
     st.markdown('<div class="section-header">A few quick questions</div>', unsafe_allow_html=True)
 
     age = st.number_input("Age", min_value=18, max_value=99, step=1, value=24)
@@ -199,8 +89,8 @@ if st.session_state.demographics is None:
             "attraction": attraction,
         }
 
-        # Create Randomized Stimulus List (10 profiles)
-        chosen_profiles = random.sample(PROFILES, NUM_PROFILES_PER_PARTICIPANT)
+        profiles = build_profiles(attraction)
+        chosen_profiles = random.sample(profiles, NUM_PROFILES_PER_PARTICIPANT)
 
         # Assign 5 control, 5 AI-disclosed
         conditions = ["control"] * 5 + ["ai_disclosed"] * 5
@@ -208,12 +98,14 @@ if st.session_state.demographics is None:
 
         stimulus_list = []
         for prof, cond in zip(chosen_profiles, conditions):
-            stimulus_list.append({
-                "profile_id": prof["profile_id"],
-                "image_url": prof["image_url"],
-                "bio": prof["bio"],
-                "condition": cond,
-            })
+            stimulus_list.append(
+                {
+                    "profile_id": prof["profile_id"],
+                    "image_url": prof["image_url"],
+                    "bio": prof["bio"],
+                    "condition": cond,
+                }
+            )
 
         random.shuffle(stimulus_list)
         st.session_state.stimulus_list = stimulus_list
@@ -223,53 +115,10 @@ if st.session_state.demographics is None:
 
     st.stop()
 
-# ---------- 6. Main Rating Loop ----------
 
-stimuli = st.session_state.stimulus_list
-idx = st.session_state.current_index
+# ---------- Attention Check Screen ----------
 
-# Safety check
-if not stimuli:
-    st.error("No stimuli available. Please reload the page.")
-    st.stop()
-
-# Total steps: 10 profiles + 1 attention check
-total_profiles = len(stimuli)           # should be 10
-total_steps = total_profiles + 1        # 11 screens
-
-# Finished all steps
-if idx >= total_steps:
-    st.success("Thank you! You have completed all profiles. You may close this window now.")
-    st.write("Your responses have been recorded.")
-    st.stop()
-
-# Map global idx (0..10) to profile index (0..9), with idx==3 as attention check
-if idx < 3:
-    profile_idx = idx          # show profiles 0,1,2
-elif idx == 3:
-    profile_idx = None         # attention check
-else:
-    profile_idx = idx - 1      # idx 4..10 -> profiles 3..9
-
-# ---------- Force scroll to top on each step ----------
-st.markdown(
-    """
-    <script>
-        window.scrollTo(0, 0);
-    </script>
-    """,
-    unsafe_allow_html=True,
-)
-
-# ---------- Progress Bar ----------
-
-st.write(f"Progress: {idx + 1} / {total_steps}")
-progress = (idx + 1) / total_steps
-st.progress(progress)
-
-# ---------- 7. Attention Check at step idx == 3 ----------
-
-if idx == 3:
+def attention_check_step():
     st.markdown("### Attention Check ⚠️")
     st.write("""
     To confirm you're paying attention,  
@@ -307,19 +156,23 @@ if idx == 3:
 
     st.stop()
 
-# ---------- 8. Regular Profile Rating (for all other idx) ----------
 
-# Only run when we're not on the attention check screen
-if profile_idx is not None:
+# ---------- Profile Rating Screen ----------
+
+def profile_step(profile_idx: int, stimuli, total_profiles: int, total_steps: int):
     current = stimuli[profile_idx]
 
-    # Profile counter: 1..10 (profiles only)
+    # Scroll to top every profile
+    scroll_to_top()
+
+    show_progress(st.session_state.current_index, total_steps)
+
     st.markdown(f"**Profile {profile_idx + 1} of {total_profiles}**")
 
     if current["image_url"]:
         st.image(current["image_url"], use_container_width=True)
 
-    st.markdown(f"{current['bio']}")
+    st.markdown(f"**Bio:** {current['bio']}")
 
     if current["condition"] == "ai_disclosed":
         st.markdown(
@@ -328,13 +181,11 @@ if profile_idx is not None:
         )
 
     st.markdown("---")
-
     st.markdown(
         '<div class="rating-title">Please rate this profile (0 = not at all, 4 = very much)</div>',
         unsafe_allow_html=True,
     )
 
-    # Sliders with forced reset per profile
     st.markdown("**Attractiveness**")
     attr = st.slider("Attractiveness", 0, 4, 2, key=f"attr_{profile_idx}", label_visibility="collapsed")
     st.markdown('<div class="min-max-labels"><span>0</span><span>4</span></div>', unsafe_allow_html=True)
@@ -366,3 +217,57 @@ if profile_idx is not None:
         append_response_to_sheet(response)
         st.session_state.current_index += 1
         st.rerun()
+
+
+# ---------- Main Experiment Flow ----------
+
+def main_experiment():
+    stimuli = st.session_state.stimulus_list
+    idx = st.session_state.current_index
+
+    # Safety check
+    if not stimuli:
+        st.error("No stimuli available. Please reload the page.")
+        st.stop()
+
+    total_profiles = len(stimuli)          # 10
+    total_steps = total_profiles + 1       # +1 for attention check = 11
+
+    # Finished all steps
+    if idx >= total_steps:
+        st.success("Thank you! You have completed all profiles. You may close this window now.")
+        st.write("Your responses have been recorded.")
+        st.stop()
+
+    # Map current index to either profile or attention check
+    if idx < 3:
+        # first 3 profiles
+        profile_idx = idx
+        scroll_to_top()
+        show_progress(idx, total_steps)
+        profile_step(profile_idx, stimuli, total_profiles, total_steps)
+
+    elif idx == 3:
+        # attention check
+        scroll_to_top()
+        show_progress(idx, total_steps)
+        attention_check_step()
+
+    else:
+        # remaining profiles: map idx 4..10 -> profile 3..9
+        profile_idx = idx - 1
+        scroll_to_top()
+        show_progress(idx, total_steps)
+        profile_step(profile_idx, stimuli, total_profiles, total_steps)
+
+
+# ---------- App Entry ----------
+
+def main():
+    consent_screen()
+    demographics_screen()
+    main_experiment()
+
+
+if __name__ == "__main__":
+    main()
