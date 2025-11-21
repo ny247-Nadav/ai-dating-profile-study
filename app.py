@@ -2,7 +2,7 @@ import streamlit as st
 import random
 from datetime import datetime
 
-from stimuli import build_profiles, NUM_PROFILES_PER_PARTICIPANT
+from stimuly import build_profiles, NUM_PROFILES_PER_PARTICIPANT
 from sheets_utils import append_response_to_sheet
 from ui_helpers import apply_global_styles, scroll_to_top, show_progress
 
