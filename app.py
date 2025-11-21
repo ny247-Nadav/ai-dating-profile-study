@@ -99,7 +99,7 @@ PROFILES = [
     for i in range(1, 21)
 ]
 
-NUM_PROFILES_PER_PARTICIPANT = 10   # 5 control + 5 AI-disclosed
+NUM_PROFILES_PER_PARTICIPANT = 10   # 10 real profiles in total
 
 # ---------- 2. Init session state ----------
 
@@ -171,7 +171,6 @@ if st.session_state.participant_id is None:
 
     agree = st.checkbox("I have read the information above and agree to participate.")
     if agree and st.button("Start the study"):
-        # Auto-generate a participant ID
         unique_id = f"PID_{int(datetime.utcnow().timestamp())}_{random.randint(1000, 9999)}"
         st.session_state.participant_id = unique_id
         st.rerun()
@@ -200,7 +199,7 @@ if st.session_state.demographics is None:
             "attraction": attraction,
         }
 
-        # ---------- Create Randomized Stimulus List ----------
+        # Create Randomized Stimulus List (10 profiles)
         chosen_profiles = random.sample(PROFILES, NUM_PROFILES_PER_PARTICIPANT)
 
         # Assign 5 control, 5 AI-disclosed
@@ -234,19 +233,25 @@ if not stimuli:
     st.error("No stimuli available. Please reload the page.")
     st.stop()
 
-# Finished all stimuli
-total_steps = len(stimuli) + 1  # +1 for the attention check
+# Total steps: 10 profiles + 1 attention check
+total_profiles = len(stimuli)           # should be 10
+total_steps = total_profiles + 1        # 11 screens
 
-# Finished all steps (10 profiles + 1 attention check)
+# Finished all steps
 if idx >= total_steps:
     st.success("Thank you! You have completed all profiles. You may close this window now.")
     st.write("Your responses have been recorded.")
     st.stop()
 
+# Map global idx (0..10) to profile index (0..9), with idx==3 as attention check
+if idx < 3:
+    profile_idx = idx          # show profiles 0,1,2
+elif idx == 3:
+    profile_idx = None         # attention check
+else:
+    profile_idx = idx - 1      # idx 4..10 -> profiles 3..9
 
-current = stimuli[idx]
-
-# ---------- Force scroll to top on each profile ----------
+# ---------- Force scroll to top on each step ----------
 st.markdown(
     """
     <script>
@@ -258,23 +263,11 @@ st.markdown(
 
 # ---------- Progress Bar ----------
 
-total_steps = len(stimuli) + 1  # 10 profiles + 1 attention check
-
-# Map idx (0..10) to profile index (0..9), skipping idx == 3 for attention check
-if idx < 3:
-    profile_idx = idx               # show profiles 0,1,2
-elif idx == 3:
-    profile_idx = None              # attention check, no profile
-else:
-    profile_idx = idx - 1           # idx 4..10 → profiles 3..9
-
-# ---------- Progress Bar ----------
 st.write(f"Progress: {idx + 1} / {total_steps}")
 progress = (idx + 1) / total_steps
 st.progress(progress)
 
-
-# ---------- Attention Check at Profile 4 (idx == 3) ----------
+# ---------- 7. Attention Check at step idx == 3 ----------
 
 if idx == 3:
     st.markdown("### Attention Check ⚠️")
@@ -314,21 +307,19 @@ if idx == 3:
 
     st.stop()
 
-# ---------- Regular Profile Rating ----------
+# ---------- 8. Regular Profile Rating (for all other idx) ----------
 
-# ---------- Regular Profile Rating ----------
-
-# Only run this block when we're not on the attention check
+# Only run when we're not on the attention check screen
 if profile_idx is not None:
     current = stimuli[profile_idx]
 
-    # Display profile counter out of 10 (profiles only)
-    st.markdown(f"**Profile {profile_idx + 1} of {len(stimuli)}**")
+    # Profile counter: 1..10 (profiles only)
+    st.markdown(f"**Profile {profile_idx + 1} of {total_profiles}**")
 
     if current["image_url"]:
         st.image(current["image_url"], use_container_width=True)
 
-    st.markdown(f"**Bio:** {current['bio']}")
+    st.markdown(f"{current['bio']}")
 
     if current["condition"] == "ai_disclosed":
         st.markdown(
@@ -343,7 +334,7 @@ if profile_idx is not None:
         unsafe_allow_html=True,
     )
 
-    # Sliders with forced reset (key = profile index)
+    # Sliders with forced reset per profile
     st.markdown("**Attractiveness**")
     attr = st.slider("Attractiveness", 0, 4, 2, key=f"attr_{profile_idx}", label_visibility="collapsed")
     st.markdown('<div class="min-max-labels"><span>0</span><span>4</span></div>', unsafe_allow_html=True)
