@@ -2,9 +2,10 @@ import streamlit as st
 import random
 from datetime import datetime
 
+# NOTE: using stimuly.py (your filename)
 from stimuly import build_profiles, NUM_PROFILES_PER_PARTICIPANT
 from sheets_utils import append_response_to_sheet
-from ui_helpers import apply_global_styles, scroll_to_top, show_progress
+from ui_helpers import apply_global_styles, scroll_to_top  # show_progress no longer used
 
 st.set_page_config(
     page_title="AI Dating Profile Study",
@@ -89,6 +90,7 @@ def demographics_screen():
             "attraction": attraction,
         }
 
+        # Build profiles based on attraction preference (men / women / both)
         profiles = build_profiles(attraction)
         chosen_profiles = random.sample(profiles, NUM_PROFILES_PER_PARTICIPANT)
 
@@ -119,6 +121,9 @@ def demographics_screen():
 # ---------- Attention Check Screen ----------
 
 def attention_check_step():
+    # Scroll to top at the start of this step
+    scroll_to_top()
+
     st.markdown("### Attention Check ⚠️")
     st.write("""
     To confirm you're paying attention,  
@@ -159,14 +164,13 @@ def attention_check_step():
 
 # ---------- Profile Rating Screen ----------
 
-def profile_step(profile_idx: int, stimuli, total_profiles: int, total_steps: int):
-    current = stimuli[profile_idx]
-
-    # Scroll to top every profile
+def profile_step(profile_idx: int, stimuli, total_profiles: int):
+    # Scroll to top at the start of each profile
     scroll_to_top()
 
-    show_progress(st.session_state.current_index, total_steps)
+    current = stimuli[profile_idx]
 
+    # Profile counter: 1..10 (profiles only)
     st.markdown(f"**Profile {profile_idx + 1} of {total_profiles}**")
 
     if current["image_url"]:
@@ -243,22 +247,16 @@ def main_experiment():
     if idx < 3:
         # first 3 profiles
         profile_idx = idx
-        scroll_to_top()
-        show_progress(idx, total_steps)
-        profile_step(profile_idx, stimuli, total_profiles, total_steps)
+        profile_step(profile_idx, stimuli, total_profiles)
 
     elif idx == 3:
         # attention check
-        scroll_to_top()
-        show_progress(idx, total_steps)
         attention_check_step()
 
     else:
         # remaining profiles: map idx 4..10 -> profile 3..9
         profile_idx = idx - 1
-        scroll_to_top()
-        show_progress(idx, total_steps)
-        profile_step(profile_idx, stimuli, total_profiles, total_steps)
+        profile_step(profile_idx, stimuli, total_profiles)
 
 
 # ---------- App Entry ----------
