@@ -4,11 +4,7 @@ import streamlit.components.v1 as components
 
 def render_profile_card(profile: dict) -> None:
     """
-    Renders a dating-app-style profile card as a single HTML block:
-    - photo
-    - fixed-choice chips (age, race, activities)
-    - bio
-    NOTE: religion is intentionally NOT included.
+    Corrected version — ensures Streamlit does NOT escape HTML for control profiles.
     """
 
     fc = profile.get("fixed_choice", {}) or {}
@@ -16,34 +12,49 @@ def render_profile_card(profile: dict) -> None:
     race = fc.get("race")
     activities = fc.get("activities", []) or []
 
-    # Build tag list (age, race, activities) – drop None/empty
+    # Chips
     tags = [age, race] + activities
     tags = [t for t in tags if t]
 
-    chips_html = "".join(
-        f"<span class='profile-chip'>{t}</span>"
-        for t in tags
-    )
+    chips_html = ""
+    if tags:
+        chips_html = "<div class='profile-chips'>" + "".join(
+            f"<span class='profile-chip'>{t}</span>"
+            for t in tags
+        ) + "</div>"
 
+    # Image
     image_html = ""
     if profile.get("image_url"):
-        # Streamlit sometimes doesn’t nest st.image into custom divs cleanly,
-        # so we use plain HTML here.
-        image_url = profile["image_url"]
-        image_html = f"<img src='{image_url}' class='profile-photo' />"
+        image_html = f"<img src='{profile['image_url']}' class='profile-photo' />"
 
+    # AI disclosure
+    ai_html = ""
+    if profile.get("condition") == "ai_disclosed":
+        ai_html = "<div class='ai-label'>🤖 Profile includes AI enhancements</div>"
+    elif profile.get("condition") == "control":
+        ai_html = "<div class='ai-label'></div>"
+        ai_html = "<div></div>"
+
+
+    # Bio
     bio = profile.get("bio", "")
 
-    card_html = f"""
-    <div class="profile-card">
-        {image_html}
-        {'<div class="profile-chips">' + chips_html + '</div>' if chips_html else ''}
-        <div class="profile-bio-label">Bio</div>
-        <div class="profile-bio-text">{bio}</div>
-    </div>
-    """
+    # *** CRITICAL FIX ***
+    # NO newline before <div ...>
+    # NO indentation anywhere in the HTML block
+    card_html = f"""<div class="profile-card">
+    {image_html}
+    {ai_html}
+    {chips_html}
+    <div class="profile-bio-text">{bio}</div>
+    </div>"""
 
+    # Render safely
     st.markdown(card_html, unsafe_allow_html=True)
+
+
+
 
 
 def apply_global_styles() -> None:
@@ -186,24 +197,19 @@ def apply_global_styles() -> None:
     )
 
 
+import streamlit.components.v1 as components
+
 def scroll_to_top():
-    """Scroll the Streamlit app content (section.main) back to the top."""
+    """Scroll the Streamlit page back to the top."""
     components.html(
         """
         <script>
-        (function() {
-            // Streamlit's main scroll container
-            const mainSection =
-                window.parent.document.querySelector('section.main')
-                || window.document.querySelector('section.main');
-
-            if (mainSection) {
-                mainSection.scrollTo({top: 0, left: 0, behavior: 'instant'});
-            } else {
-                // Fallback: scroll window if for some reason section.main is not found
-                window.parent.scrollTo({top: 0, left: 0, behavior: 'instant'});
-            }
-        })();
+        // Try both html and body (different browsers use one or the other)
+        const d = window.parent.document;
+        if (d) {
+            d.documentElement.scrollTop = 0;
+            d.body.scrollTop = 0;
+        }
         </script>
         """,
         height=0,

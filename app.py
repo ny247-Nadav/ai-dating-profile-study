@@ -3,7 +3,6 @@ import random
 from datetime import datetime
 import streamlit.components.v1 as components  
 
-# NOTE: using stimuly.py (your filename)
 from stimuly import build_profiles, NUM_PROFILES_PER_PARTICIPANT
 from sheets_utils import append_response_to_sheet
 from ui_helpers import apply_global_styles, scroll_to_top, render_profile_card
@@ -28,11 +27,9 @@ def init_session():
         st.session_state.current_index = 0
     if "responses" not in st.session_state:
         st.session_state.responses = []
-    if "slider_reset_token" not in st.session_state:
-        st.session_state.slider_reset_token = 0
-
 
 init_session()
+
 
 # ---------- Consent Screen ----------
 def consent_screen():
@@ -42,19 +39,17 @@ def consent_screen():
     st.markdown('<div class="big-title">Dating Study 💘</div>', unsafe_allow_html=True)
 
     st.markdown("""
-    **Consent & Study Info**
+    **Consent & Study Info**  
+    You are invited to take part in a short research study about online dating profiles.
 
-    You are invited to take part in a short research study about online dating profiles. You will see a series of fictional dating profiles and
-    rate how attractive, authentic, and desirable you find them.
+    You will see fictional profiles and rate their attractiveness, authenticity,  
+    and desirability.
 
-    - The study should take about **5–10 minutes**.  
-    - Participation is **voluntary** and **anonymous**.  
-    - You may stop at any time by closing this window.
-
-    If you agree to participate, please continue below.
+    - Takes **5–10 minutes**  
+    - **Anonymous** & **voluntary**  
     """)
 
-    agree = st.checkbox("I have read the information above and agree to participate.")
+    agree = st.checkbox("I agree to participate.")
     if agree and st.button("Start the study"):
         unique_id = f"PID_{int(datetime.utcnow().timestamp())}_{random.randint(1000, 9999)}"
         st.session_state.participant_id = unique_id
@@ -62,22 +57,17 @@ def consent_screen():
 
     st.stop()
 
-# ---------- Demographics Screen ----------
+
+# ---------- Demographics ----------
 def demographics_screen():
     if st.session_state.demographics is not None:
         return
 
     st.markdown('<div class="section-header">A few quick questions</div>', unsafe_allow_html=True)
 
-    age = st.number_input("Age", min_value=18, max_value=99, step=1, value=24)
-    gender = st.selectbox(
-        "Your gender",
-        ["Prefer not to say", "Woman", "Man", "Non-binary", "Other"],
-    )
-    attraction = st.selectbox(
-        "Which gender(s) are you typically attracted to?",
-        ["Men", "Women", "Both"],
-    )
+    age = st.number_input("Age", min_value=18, max_value=99, value=24)
+    gender = st.selectbox("Your gender", ["Prefer not to say", "Woman", "Man", "Non-binary", "Other"])
+    attraction = st.selectbox("You are usually attracted to:", ["Men", "Women", "Both"])
 
     if st.button("Continue to profiles"):
         st.session_state.demographics = {
@@ -86,22 +76,22 @@ def demographics_screen():
             "attraction": attraction,
         }
 
-        # Build profiles based on attraction preference (men / women / both)
+        # Build profiles with fixed-choice attributes
         profiles = build_profiles(attraction)
-        chosen_profiles = random.sample(profiles, NUM_PROFILES_PER_PARTICIPANT)
+        chosen = random.sample(profiles, NUM_PROFILES_PER_PARTICIPANT)
 
-        # Assign 5 control, 5 AI-disclosed
+        # Assign 50/50 control/treatment
         conditions = ["control"] * 5 + ["ai_disclosed"] * 5
         random.shuffle(conditions)
 
         stimulus_list = []
-        for prof, cond in zip(chosen_profiles, conditions):
+        for prof, cond in zip(chosen, conditions):
             stimulus_list.append(
                 {
                     "profile_id": prof["profile_id"],
                     "image_url": prof["image_url"],
                     "bio": prof["bio"],
-                    "fixed_choice": prof["fixed_choice"],  # 🔥 added
+                    "fixed_choice": prof["fixed_choice"],   # <-- IMPORTANT
                     "condition": cond,
                 }
             )
@@ -109,32 +99,21 @@ def demographics_screen():
         random.shuffle(stimulus_list)
         st.session_state.stimulus_list = stimulus_list
         st.session_state.current_index = 0
-
         st.rerun()
 
     st.stop()
 
-# ---------- Attention Check Screen ----------
+
+# ---------- Attention Check ----------
 def attention_check_step():
     scroll_to_top()
+
     st.markdown("### Attention Check ⚠️")
-    st.write("""
-    To confirm you're paying attention,  
-    **please select the rating '3' for all three questions below.**
-    """)
+    st.write("Please choose **3** for all answers below.")
 
-    st.markdown('<div class="profile-card">', unsafe_allow_html=True)
-
-    att1 = st.slider("Attractiveness", 0, 4, 2, key="attn_attr", label_visibility="collapsed")
-    st.markdown('<div class="min-max-labels"><span>0</span><span>4</span></div>', unsafe_allow_html=True)
-
-    att2 = st.slider("Authenticity", 0, 4, 2, key="attn_auth", label_visibility="collapsed")
-    st.markdown('<div class="min-max-labels"><span>0</span><span>4</span></div>', unsafe_allow_html=True)
-
-    att3 = st.slider("Desirability", 0, 4, 2, key="attn_desi", label_visibility="collapsed")
-    st.markdown('<div class="min-max-labels"><span>0</span><span>4</span></div>', unsafe_allow_html=True)
-
-    st.markdown("</div>", unsafe_allow_html=True)
+    att1 = st.slider("Attractiveness", 0, 4, 2, key="attn_attr")
+    att2 = st.slider("Authenticity",   0, 4, 2, key="attn_auth")
+    att3 = st.slider("Desirability",   0, 4, 2, key="attn_desi")
 
     if st.button("Next"):
         response = {
@@ -155,11 +134,7 @@ def attention_check_step():
         append_response_to_sheet(response)
 
         components.html(
-            """
-            <script>
-            window.parent.scrollTo({top: 0, behavior: 'auto'});
-            </script>
-            """,
+            "<script>window.parent.scrollTo({top: 0, behavior: 'auto'});</script>",
             height=0,
         )
 
@@ -168,75 +143,30 @@ def attention_check_step():
 
     st.stop()
 
-# ---------- Profile Rating Screen ----------
-def profile_step(profile_idx: int, stimuli, total_profiles: int):
+
+# ---------- Rating Screen ----------
+def profile_step(idx: int, stimuli, total_profiles: int):
     scroll_to_top()
 
-    current = stimuli[profile_idx]
-    # Profile counter
-    st.markdown(f"**Profile {profile_idx + 1} of {total_profiles}**")
+    current = stimuli[idx]
 
-    # ---- Profile card block ----
-    with st.container():
-        render_profile_card(current)
+    # Header
+    st.markdown(f"**Profile {idx + 1} of {total_profiles}**")
 
-        if current["condition"] == "ai_disclosed":
-            st.markdown(
-                '<div class="ai-label">This profile includes AI-assisted enhancements.</div>',
-                unsafe_allow_html=True,
-            )
+    # ---- Render full card including fixed-choice ----
+    render_profile_card(current)
 
-    st.markdown("---")
-    st.markdown(
-        '<div class="rating-title">Please rate this profile (0 = not at all, 4 = very much)</div>',
-        unsafe_allow_html=True,
-    )
 
-    st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
 
-    token = st.session_state.get("slider_reset_token", 0)
+    # ---- Rating sliders ----
+    st.markdown('<div class="rating-title">Rate this profile</div>', unsafe_allow_html=True)
 
-    # ---------- Attractiveness ----------
-    st.markdown("**Attractiveness**")
-    attr = st.slider(
-        "Attractiveness", 0, 4, 2,
-        key=f"attr_{token}",
-        label_visibility="collapsed",
-    )
-    st.markdown(
-        '<div class="min-max-labels"><span>0</span><span>4</span></div>',
-        unsafe_allow_html=True,
-    )
-
-    # ---------- Authenticity ----------
-    st.markdown("**Authenticity**")
-    auth = st.slider(
-        "Authenticity", 0, 4, 2,
-        key=f"auth_{token}",
-        label_visibility="collapsed",
-    )
-    st.markdown(
-        '<div class="min-max-labels"><span>0</span><span>4</span></div>',
-        unsafe_allow_html=True,
-    )
-
-    # ---------- Desirability ----------
-    st.markdown("**Desirability**")
-    desi = st.slider(
-        "Desirability", 0, 4, 2,
-        key=f"desi_{token}",
-        label_visibility="collapsed",
-    )
-    st.markdown(
-        '<div class="min-max-labels"><span>0</span><span>4</span></div>',
-        unsafe_allow_html=True,
-    )
-
-    # Run scroll script after building the page
-    scroll_to_top()
+    attr = st.slider("Attractiveness", 0, 4, 2, key=f"attr_{idx}")
+    auth = st.slider("Authenticity",   0, 4, 2, key=f"auth_{idx}")
+    desi = st.slider("Desirability",   0, 4, 2, key=f"desi_{idx}")
 
     if st.button("Next"):
-        response = {
+        row = {
             "timestamp": datetime.utcnow().isoformat(),
             "participant_id": st.session_state.participant_id,
             "age": st.session_state.demographics["age"],
@@ -250,42 +180,44 @@ def profile_step(profile_idx: int, stimuli, total_profiles: int):
             "attention_check": False,
             "attention_correct": "",
         }
-        st.session_state.responses.append(response)
-        append_response_to_sheet(response)
 
-        st.session_state.slider_reset_token += 1
+        st.session_state.responses.append(row)
+        append_response_to_sheet(row)
+
+        components.html(
+            "<script>window.parent.scrollTo({top: 0, behavior: 'auto'});</script>",
+            height=0,
+        )
+
         st.session_state.current_index += 1
         st.rerun()
 
 
-
-# ---------- Main Experiment Flow ----------
+# ---------- Experiment Flow ----------
 def main_experiment():
     stimuli = st.session_state.stimulus_list
     idx = st.session_state.current_index
 
     if not stimuli:
-        st.error("No stimuli available. Please reload the page.")
+        st.error("No stimuli found.")
         st.stop()
 
-    total_profiles = len(stimuli)
-    total_steps = total_profiles + 1   # includes attention check
+    total = len(stimuli)
+    total_steps = total + 1
 
     if idx >= total_steps:
-        st.success("Thank you! You have completed all profiles. You may close this window now.")
-        st.write("Your responses have been recorded.")
+        st.success("All done! Thank you 🙏")
         st.stop()
 
-    if idx < 3:
-        profile_step(idx, stimuli, total_profiles)
-
-    elif idx == 3:
+    if idx == 3:
         attention_check_step()
-
+    elif idx < 3:
+        profile_step(idx, stimuli, total)
     else:
-        profile_step(idx - 1, stimuli, total_profiles)
+        profile_step(idx - 1, stimuli, total)
 
-# ---------- App Entry ----------
+
+# ---------- Main ----------
 def main():
     consent_screen()
     demographics_screen()
