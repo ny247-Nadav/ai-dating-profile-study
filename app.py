@@ -6,19 +6,17 @@ import streamlit.components.v1 as components
 # NOTE: using stimuly.py (your filename)
 from stimuly import build_profiles, NUM_PROFILES_PER_PARTICIPANT
 from sheets_utils import append_response_to_sheet
-from ui_helpers import apply_global_styles, scroll_to_top  # show_progress no longer used
+from ui_helpers import apply_global_styles, scroll_to_top, render_profile_card
 
 st.set_page_config(
-    page_title="AI Dating Profile Study",
+    page_title="Dating Profile Study",
     page_icon="💘",
     layout="centered"
 )
 
 apply_global_styles()
 
-
 # ---------- Session Init ----------
-
 def init_session():
     if "participant_id" not in st.session_state:
         st.session_state.participant_id = None
@@ -30,24 +28,23 @@ def init_session():
         st.session_state.current_index = 0
     if "responses" not in st.session_state:
         st.session_state.responses = []
+    if "slider_reset_token" not in st.session_state:
+        st.session_state.slider_reset_token = 0
 
 
 init_session()
 
-
 # ---------- Consent Screen ----------
-
 def consent_screen():
     if st.session_state.participant_id is not None:
         return
 
-    st.markdown('<div class="big-title">AI in Dating Profiles Study 💘</div>', unsafe_allow_html=True)
+    st.markdown('<div class="big-title">Dating Study 💘</div>', unsafe_allow_html=True)
 
     st.markdown("""
     **Consent & Study Info**
 
-    You are invited to take part in a short research study about online dating profiles
-    and AI-assisted content. You will see a series of fictional dating profiles and
+    You are invited to take part in a short research study about online dating profiles. You will see a series of fictional dating profiles and
     rate how attractive, authentic, and desirable you find them.
 
     - The study should take about **5–10 minutes**.  
@@ -65,9 +62,7 @@ def consent_screen():
 
     st.stop()
 
-
 # ---------- Demographics Screen ----------
-
 def demographics_screen():
     if st.session_state.demographics is not None:
         return
@@ -106,6 +101,7 @@ def demographics_screen():
                     "profile_id": prof["profile_id"],
                     "image_url": prof["image_url"],
                     "bio": prof["bio"],
+                    "fixed_choice": prof["fixed_choice"],  # 🔥 added
                     "condition": cond,
                 }
             )
@@ -118,11 +114,8 @@ def demographics_screen():
 
     st.stop()
 
-
 # ---------- Attention Check Screen ----------
-
 def attention_check_step():
-    # Scroll to top at the start of this step
     scroll_to_top()
     st.markdown("### Attention Check ⚠️")
     st.write("""
@@ -144,7 +137,6 @@ def attention_check_step():
     st.markdown("</div>", unsafe_allow_html=True)
 
     if st.button("Next"):
-        # Save the response
         response = {
             "timestamp": datetime.utcnow().isoformat(),
             "participant_id": st.session_state.participant_id,
@@ -162,7 +154,6 @@ def attention_check_step():
         st.session_state.responses.append(response)
         append_response_to_sheet(response)
 
-        # 🔥 scroll BEFORE rerun (required for Streamlit Cloud)
         components.html(
             """
             <script>
@@ -175,44 +166,22 @@ def attention_check_step():
         st.session_state.current_index += 1
         st.rerun()
 
-
     st.stop()
 
-
 # ---------- Profile Rating Screen ----------
-
 def profile_step(profile_idx: int, stimuli, total_profiles: int):
-    # Scroll to top at the start of each profile
     scroll_to_top()
-
     current = stimuli[profile_idx]
 
-    # Profile counter: 1..10 (profiles only)
     st.markdown(f"**Profile {profile_idx + 1} of {total_profiles}**")
 
-    # ---- Profile card block ----
     with st.container():
-        st.markdown('<div class="profile-card">', unsafe_allow_html=True)
-
-        if current["image_url"]:
-            st.image(current["image_url"], use_container_width=True)
-
-        # Bio
-        st.markdown(
-            f'<div class="profile-bio-label">Bio:</div>'
-            f'<div class="profile-bio-text">{current["bio"]}</div>',
-            unsafe_allow_html=True,
-        )
-
-        # AI label (only for treatment condition)
+        render_profile_card(current)
         if current["condition"] == "ai_disclosed":
             st.markdown(
                 '<div class="ai-label">This profile includes AI-assisted enhancements.</div>',
                 unsafe_allow_html=True,
             )
-
-        st.markdown("</div>", unsafe_allow_html=True)
-    # ---- end card ----
 
     st.markdown("---")
     st.markdown(
@@ -220,30 +189,49 @@ def profile_step(profile_idx: int, stimuli, total_profiles: int):
         unsafe_allow_html=True,
     )
 
-    # Sliders (start at 2 each time)
+    st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
+
+    # ---- use reset token to create fresh widget keys each profile ----
+    token = st.session_state.get("slider_reset_token", 0)
+
+    # Attractiveness
     st.markdown("**Attractiveness**")
     attr = st.slider(
-        "Attractiveness", 0, 4, 2,
-        key=f"attr_{profile_idx}",
+        "Attractiveness",
+        0, 4, 2,
+        key=f"attr_{token}",
         label_visibility="collapsed",
     )
-    st.markdown('<div class="min-max-labels"><span>0</span><span>4</span></div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="min-max-labels"><span>0</span><span>4</span></div>',
+        unsafe_allow_html=True,
+    )
 
+    # Authenticity
     st.markdown("**Authenticity**")
     auth = st.slider(
-        "Authenticity", 0, 4, 2,
-        key=f"auth_{profile_idx}",
+        "Authenticity",
+        0, 4, 2,
+        key=f"auth_{token}",
         label_visibility="collapsed",
     )
-    st.markdown('<div class="min-max-labels"><span>0</span><span>4</span></div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="min-max-labels"><span>0</span><span>4</span></div>',
+        unsafe_allow_html=True,
+    )
 
+    # Desirability
     st.markdown("**Desirability**")
     desi = st.slider(
-        "Desirability", 0, 4, 2,
-        key=f"desi_{profile_idx}",
+        "Desirability",
+        0, 4, 2,
+        key=f"desi_{token}",
         label_visibility="collapsed",
     )
-    st.markdown('<div class="min-max-labels"><span>0</span><span>4</span></div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="min-max-labels"><span>0</span><span>4</span></div>',
+        unsafe_allow_html=True,
+    )
 
     if st.button("Next"):
         response = {
@@ -263,64 +251,44 @@ def profile_step(profile_idx: int, stimuli, total_profiles: int):
         st.session_state.responses.append(response)
         append_response_to_sheet(response)
 
-        # scroll BEFORE rerun
-        components.html(
-            """
-            <script>
-            window.parent.scrollTo({top: 0, behavior: 'auto'});
-            </script>
-            """,
-            height=0,
-        )
+        # bump token so next profile gets fresh sliders defaulting to 2
+        st.session_state.slider_reset_token += 1
 
         st.session_state.current_index += 1
         st.rerun()
 
 
-
 # ---------- Main Experiment Flow ----------
-
 def main_experiment():
     stimuli = st.session_state.stimulus_list
     idx = st.session_state.current_index
 
-    # Safety check
     if not stimuli:
         st.error("No stimuli available. Please reload the page.")
         st.stop()
 
-    total_profiles = len(stimuli)          # 10
-    total_steps = total_profiles + 1       # +1 for attention check = 11
+    total_profiles = len(stimuli)
+    total_steps = total_profiles + 1   # includes attention check
 
-    # Finished all steps
     if idx >= total_steps:
         st.success("Thank you! You have completed all profiles. You may close this window now.")
         st.write("Your responses have been recorded.")
         st.stop()
 
-    # Map current index to either profile or attention check
     if idx < 3:
-        # first 3 profiles
-        profile_idx = idx
-        profile_step(profile_idx, stimuli, total_profiles)
+        profile_step(idx, stimuli, total_profiles)
 
     elif idx == 3:
-        # attention check
         attention_check_step()
 
     else:
-        # remaining profiles: map idx 4..10 -> profile 3..9
-        profile_idx = idx - 1
-        profile_step(profile_idx, stimuli, total_profiles)
-
+        profile_step(idx - 1, stimuli, total_profiles)
 
 # ---------- App Entry ----------
-
 def main():
     consent_screen()
     demographics_screen()
     main_experiment()
-
 
 if __name__ == "__main__":
     main()

@@ -1,75 +1,135 @@
 import random
 
+NUM_PROFILES_PER_PARTICIPANT = 10
 
-MALE_IMAGE_URL = "https://fortune.com/img-assets/wp-content/uploads/2025/05/GettyImages-2215203788-e1747765808923.jpg?w=1440&q=75"
-FEMALE_IMAGE_URL = "https://bidenwhitehouse.archives.gov/wp-content/uploads/2025/01/harris-profile-21.png"
-
-BIOS = [
-    # SAME 20 BIOS AS BEFORE
-    "Teacher by day, amateur chef by night. I love quiet coffee shops, long walks, and Sunday brunch with friends. Looking for someone kind, grounded, and ready to laugh at bad puns.",
-    "Tech worker who escapes screens with books, live music, and weekend hikes. I value honesty, curiosity, and good communication. Let’s see if we can make each other’s playlists better.",
-    "NYC transplant who still gets excited about the skyline. Into movies, board games, and exploring new neighborhoods. Looking for a caring partner who enjoys both going out and staying in.",
-    "Big fan of cozy dinners, wandering through museums, and talking about everything from podcasts to politics. Friends describe me as thoughtful, reliable, and a good listener.",
-    "Fitness is my reset button—runs in the park, yoga classes, and trying new healthy recipes. I’m looking for someone warm, supportive, and open-minded about life and relationships.",
-    "I love hosting friends, making way too much pasta, and discovering small local spots. Family and close friendships are a big part of my life. Looking for someone genuine and kind.",
-    "Book lover, plant caretaker, and frequent movie re-watcher. I appreciate people who are emotionally mature, honest, and not afraid of real conversations.",
-    "Weekdays are busy with work, but I always make time for friends, music, and good food. I’m hoping to meet someone who is thoughtful, affectionate, and looking for something real.",
-    "I’m a mix of introvert and extrovert: I love evenings out with friends but also love quiet nights in. Looking for someone respectful, communicative, and emotionally intelligent.",
-    "I enjoy traveling when I can, but I’m just as happy discovering new corners of my own city. I value kindness, stability, and a shared sense of humor.",
-    "I’m close with my family and deeply value loyalty and support. My ideal evening is cooking together, sharing stories, and finding reasons to laugh about the day.",
-    "Curious by nature—I love learning new things, whether it’s a recipe, a podcast topic, or a new neighborhood. Looking for a partner who is kind, patient, and open-hearted.",
-    "Concerts, bookstores, and late-night conversations are my favorite kind of weekend. I appreciate people who are sincere, steady, and comfortable being themselves.",
-    "I’m pretty grounded: I enjoy my work, take care of my people, and make time for small joys like coffee walks and sunsets. Hoping to meet someone who feels the same.",
-    "I like to keep things balanced: staying active, seeing friends, and leaving space to just breathe. Looking for someone caring, thoughtful, and emotionally aware.",
-    "I love trying new restaurants, discovering hidden parks, and planning small getaways. My ideal match is empathetic, communicative, and ready to build something meaningful.",
-    "Friends would say I’m reliable, easygoing, and quietly funny. I’m happiest when I’m with good company, sharing food, stories, or a show we’re both into.",
-    "I’m drawn to people who are honest, kind, and a little playful. I enjoy simple things: walks, coffee dates, and evenings where the conversation just flows.",
-    "I like a slow morning, a good playlist, and a day that includes at least one small adventure. Looking for someone who is genuine, caring, and interested in a real connection.",
-    "Life is busy but I try to prioritize what matters: relationships, health, and learning. If you’re thoughtful, kind, and ready for something sincere, we might get along well.",
+# These will be replaced later — but good for now
+MALE_IMAGE_URLS = [
+    "https://upload.wikimedia.org/wikipedia/commons/5/56/Donald_Trump_official_portrait.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/5/56/Donald_Trump_official_portrait.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/5/56/Donald_Trump_official_portrait.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/5/56/Donald_Trump_official_portrait.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/5/56/Donald_Trump_official_portrait.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/5/56/Donald_Trump_official_portrait.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/5/56/Donald_Trump_official_portrait.jpg",
+    "hhttps://upload.wikimedia.org/wikipedia/commons/5/56/Donald_Trump_official_portrait.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/5/56/Donald_Trump_official_portrait.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/5/56/Donald_Trump_official_portrait.jpg",
 ]
 
-NUM_PROFILES_PER_PARTICIPANT = 10
+FEMALE_IMAGE_URLS = [
+    "https://upload.wikimedia.org/wikipedia/commons/1/12/Kamala_Harris_Vice_Presidential_Portrait_2021.jpg","https://upload.wikimedia.org/wikipedia/commons/9/9c/Kamala_Harris_2023_Speaking.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/0/00/Kamala_Harris_DNC_2019.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/4/40/Kamala_Harris_in_the_Senate.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/7/79/Kamala_Harris_ceremony_2021.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/2/2e/Kamala_Harris_Portrait_Smile.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/6/6b/Kamala_Harris_Campaign_Stop_2024.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/5/52/Kamala_Harris_Office_2022.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/8/8a/Kamala_Harris_Rally_Speech_2019.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/6/61/Kamala_Harris_Interview_2020.jpg",
+]
+
+MALE_BIOS = [
+    "Former business leader who enjoys golf, big gatherings, and lively conversations. I appreciate confidence, loyalty, and humor.",
+    "I like staying active, meeting new people, and keeping things exciting. Looking for someone who’s fun, sharp, and enjoys a bit of adventure.",
+    "Work keeps me busy, but I always make time for great food, good company, and strong discussions. Seeking someone warm and witty.",
+    "Family-oriented, driven, and always planning the next big goal. I value honesty, passion, and ambition.",
+    "I enjoy traveling, social events, and relaxing with friends. Looking for someone charismatic and open-hearted.",
+    "Love the energy of big cities, great restaurants, and meaningful conversations. Seeking someone who knows what they want.",
+    "Balanced between work and life: I enjoy sports, good stories, and memorable evenings. Looking for a thoughtful connection.",
+    "Focused, committed, and generous with the people I care about. Hoping to meet someone grounded and kind.",
+    "I appreciate confidence, humor, and someone who enjoys both quiet nights and spontaneous plans.",
+    "Leader at heart, companion by choice. Looking for someone who’s supportive, honest, and ready for something real.",
+]
+
+
+FEMALE_BIOS = [
+    "Dedicated professional who loves community, family time, and discovering new places. Looking for someone caring and thoughtful.",
+    "I enjoy long walks, great conversations, and trying new foods. Seeking someone kind and emotionally intelligent.",
+    "Passionate about my work but still love slow weekends, good music, and time with friends. Looking for sincerity and warmth.",
+    "Balanced, curious, and always open to new experiences. Hoping to meet someone stable and communicative.",
+    "I value compassion, humor, and authenticity. Ideal date? Coffee, a walk, and conversation that flows naturally.",
+    "I love learning, exploring, and finding small joys in everyday life. Seeking someone genuine and open-minded.",
+    "Family is important to me, as are loyalty, connection, and shared values. Looking for someone grounded and supportive.",
+    "I enjoy travel, culture, and supporting the people I care about. Hoping to meet someone thoughtful and steady.",
+    "Hardworking but playful when it matters — looking for someone respectful, warm, and ready for something intentional.",
+    "I appreciate kindness, clear communication, and emotional maturity. Let’s build something meaningful if the connection is right.",
+]
+
+AGES = ["24", "25", "26", "27", "28", "29", "30", "31"]
+RACES = ["White", "Black", "Asian", "Latino", "Mixed", "Other"]
+
+ACTIVITY_POOL = [
+    "Never smoking",
+    "Occasionally smoking",
+    "Regularly smoking",
+    "Never drinking",
+    "Socially drinking",
+    "Regularly drinking",
+    "Hiking",
+    "Movies",
+    "Cooking",
+    "Tech",
+    "Art",
+    "Travel",
+]
+
+def _generate_fixed_choice():
+    """Return a fixed-choice dict for a single profile."""
+    age = random.choice(AGES)
+    race = random.choice(RACES)
+
+    # choose 3–4 distinct activities
+    num_acts = random.choice([3, 4])
+    activities = random.sample(ACTIVITY_POOL, num_acts)
+
+    return {
+        "age": age,
+        "race": race,
+        "activities": activities,
+    }
 
 
 def build_profiles(attraction_preference: str):
     """
-    Build 10 profiles based on participant's attraction:
-    - "Men" → 10 male profiles
-    - "Women" → 10 female profiles
-    - "Both" → 5 male + 5 female shuffled
+    Build 10 paired profiles (image + fixed-choice + bio), returned in random order.
+
+    - Men   → 10 male profiles (random order)
+    - Women → 10 female profiles (random order)
+    - Both  → 5 male + 5 female (mixed + random order)
     """
 
-    # Build 20 male profiles
     male_profiles = [
         {
-            "profile_id": f"m{i}",
+            "profile_id": f"m{i+1}",
             "gender": "man",
-            "image_url": MALE_IMAGE_URL,
-            "bio": BIOS[i - 1],
+            "image_url": MALE_IMAGE_URLS[i],
+            "bio": MALE_BIOS[i],
+            "fixed_choice": _generate_fixed_choice(),
         }
-        for i in range(1, 21)
+        for i in range(10)
     ]
 
-    # Build 20 female profiles
     female_profiles = [
         {
-            "profile_id": f"w{i}",
+            "profile_id": f"w{i+1}",
             "gender": "woman",
-            "image_url": FEMALE_IMAGE_URL,
-            "bio": BIOS[i - 1],
+            "image_url": FEMALE_IMAGE_URLS[i],
+            "bio": FEMALE_BIOS[i],
+            "fixed_choice": _generate_fixed_choice(),
         }
-        for i in range(1, 21)
+        for i in range(10)
     ]
 
     if attraction_preference == "Men":
-        return random.sample(male_profiles, NUM_PROFILES_PER_PARTICIPANT)
+        profiles = male_profiles.copy()
 
-    if attraction_preference == "Women":
-        return random.sample(female_profiles, NUM_PROFILES_PER_PARTICIPANT)
+    elif attraction_preference == "Women":
+        profiles = female_profiles.copy()
 
-    # BOTH → randomly select 5 male + 5 female
-    chosen_m = random.sample(male_profiles, 5)
-    chosen_w = random.sample(female_profiles, 5)
-    combined = chosen_m + chosen_w
-    random.shuffle(combined)
-    return combined
+    else:  # "Both"
+        chosen_m = random.sample(male_profiles, 5)
+        chosen_w = random.sample(female_profiles, 5)
+        profiles = chosen_m + chosen_w
+
+    random.shuffle(profiles)
+    return profiles
