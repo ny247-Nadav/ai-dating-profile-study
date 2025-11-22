@@ -171,12 +171,15 @@ def attention_check_step():
 # ---------- Profile Rating Screen ----------
 def profile_step(profile_idx: int, stimuli, total_profiles: int):
     scroll_to_top()
-    current = stimuli[profile_idx]
 
+    current = stimuli[profile_idx]
+    # Profile counter
     st.markdown(f"**Profile {profile_idx + 1} of {total_profiles}**")
 
+    # ---- Profile card block ----
     with st.container():
         render_profile_card(current)
+
         if current["condition"] == "ai_disclosed":
             st.markdown(
                 '<div class="ai-label">This profile includes AI-assisted enhancements.</div>',
@@ -191,14 +194,12 @@ def profile_step(profile_idx: int, stimuli, total_profiles: int):
 
     st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
 
-    # ---- use reset token to create fresh widget keys each profile ----
     token = st.session_state.get("slider_reset_token", 0)
 
-    # Attractiveness
+    # ---------- Attractiveness ----------
     st.markdown("**Attractiveness**")
     attr = st.slider(
-        "Attractiveness",
-        0, 4, 2,
+        "Attractiveness", 0, 4, 2,
         key=f"attr_{token}",
         label_visibility="collapsed",
     )
@@ -207,11 +208,10 @@ def profile_step(profile_idx: int, stimuli, total_profiles: int):
         unsafe_allow_html=True,
     )
 
-    # Authenticity
+    # ---------- Authenticity ----------
     st.markdown("**Authenticity**")
     auth = st.slider(
-        "Authenticity",
-        0, 4, 2,
+        "Authenticity", 0, 4, 2,
         key=f"auth_{token}",
         label_visibility="collapsed",
     )
@@ -220,11 +220,10 @@ def profile_step(profile_idx: int, stimuli, total_profiles: int):
         unsafe_allow_html=True,
     )
 
-    # Desirability
+    # ---------- Desirability ----------
     st.markdown("**Desirability**")
     desi = st.slider(
-        "Desirability",
-        0, 4, 2,
+        "Desirability", 0, 4, 2,
         key=f"desi_{token}",
         label_visibility="collapsed",
     )
@@ -232,6 +231,9 @@ def profile_step(profile_idx: int, stimuli, total_profiles: int):
         '<div class="min-max-labels"><span>0</span><span>4</span></div>',
         unsafe_allow_html=True,
     )
+
+    # Run scroll script after building the page
+    scroll_to_top()
 
     if st.button("Next"):
         response = {
@@ -251,11 +253,10 @@ def profile_step(profile_idx: int, stimuli, total_profiles: int):
         st.session_state.responses.append(response)
         append_response_to_sheet(response)
 
-        # bump token so next profile gets fresh sliders defaulting to 2
         st.session_state.slider_reset_token += 1
-
         st.session_state.current_index += 1
         st.rerun()
+
 
 
 # ---------- Main Experiment Flow ----------

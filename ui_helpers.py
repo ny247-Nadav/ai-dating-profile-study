@@ -186,13 +186,26 @@ def apply_global_styles() -> None:
     )
 
 
-def scroll_to_top() -> None:
-    """Force the browser window to scroll to the top on each rerun."""
+def scroll_to_top():
+    """Scroll the Streamlit app content (section.main) back to the top."""
     components.html(
         """
         <script>
-        window.parent.scrollTo({top: 0, behavior: 'auto'});
+        (function() {
+            // Streamlit's main scroll container
+            const mainSection =
+                window.parent.document.querySelector('section.main')
+                || window.document.querySelector('section.main');
+
+            if (mainSection) {
+                mainSection.scrollTo({top: 0, left: 0, behavior: 'instant'});
+            } else {
+                // Fallback: scroll window if for some reason section.main is not found
+                window.parent.scrollTo({top: 0, left: 0, behavior: 'instant'});
+            }
+        })();
         </script>
         """,
         height=0,
     )
+
