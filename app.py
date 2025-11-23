@@ -1,7 +1,6 @@
 import streamlit as st
 import random
 from datetime import datetime
-import streamlit.components.v1 as components  
 
 from stimuly import build_profiles, NUM_PROFILES_PER_PARTICIPANT
 from sheets_utils import append_response_to_sheet
@@ -27,6 +26,8 @@ def init_session():
         st.session_state.current_index = 0
     if "responses" not in st.session_state:
         st.session_state.responses = []
+    if "should_scroll" not in st.session_state:
+        st.session_state.should_scroll = False
 
 init_session()
 
@@ -106,10 +107,11 @@ def demographics_screen():
 
 # ---------- Attention Check ----------
 def attention_check_step():
-    scroll_to_top()
-
     st.markdown("### Attention Check ⚠️")
     st.write("Please choose **3** for all answers below.")
+    
+    # Always scroll to top after content is rendered
+    scroll_to_top()
 
     att1 = st.slider("Attractiveness", 0, 4, 2, key="attn_attr")
     att2 = st.slider("Authenticity",   0, 4, 2, key="attn_auth")
@@ -133,12 +135,8 @@ def attention_check_step():
         st.session_state.responses.append(response)
         append_response_to_sheet(response)
 
-        components.html(
-            "<script>window.parent.scrollTo({top: 0, behavior: 'auto'});</script>",
-            height=0,
-        )
-
         st.session_state.current_index += 1
+        st.session_state.should_scroll = True
         st.rerun()
 
     st.stop()
@@ -146,8 +144,9 @@ def attention_check_step():
 
 # ---------- Rating Screen ----------
 def profile_step(idx: int, stimuli, total_profiles: int):
+    # Scroll immediately at the start
     scroll_to_top()
-
+    
     current = stimuli[idx]
 
     # Header
@@ -155,8 +154,9 @@ def profile_step(idx: int, stimuli, total_profiles: int):
 
     # ---- Render full card including fixed-choice ----
     render_profile_card(current)
-
-
+    
+    # Scroll again after content is rendered
+    scroll_to_top()
 
     # ---- Rating sliders ----
     st.markdown('<div class="rating-title">Rate this profile</div>', unsafe_allow_html=True)
@@ -184,12 +184,8 @@ def profile_step(idx: int, stimuli, total_profiles: int):
         st.session_state.responses.append(row)
         append_response_to_sheet(row)
 
-        components.html(
-            "<script>window.parent.scrollTo({top: 0, behavior: 'auto'});</script>",
-            height=0,
-        )
-
         st.session_state.current_index += 1
+        st.session_state.should_scroll = True
         st.rerun()
 
 

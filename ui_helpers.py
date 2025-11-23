@@ -1,5 +1,4 @@
 import streamlit as st
-import streamlit.components.v1 as components
 
 
 def render_profile_card(profile: dict) -> None:
@@ -74,6 +73,15 @@ def apply_global_styles() -> None:
             margin: 0 auto;
             font-family: system-ui, -apple-system, BlinkMacSystemFont,
                          "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+        }
+        
+        /* Scroll anchor at top */
+        #scroll-anchor-top {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 0;
+            width: 0;
         }
 
         body {
@@ -192,26 +200,149 @@ def apply_global_styles() -> None:
             border-radius: 999px;
         }
         </style>
+        <script>
+        // Global scroll handler - runs on every page load
+        (function() {
+            function scrollToTopNow() {
+                try {
+                    // Get parent window (where Streamlit actually runs)
+                    const pw = window.parent;
+                    const pd = pw.document;
+                    
+                    // Scroll parent window - most important
+                    pw.scrollTo(0, 0);
+                    pw.scroll(0, 0);
+                    
+                    // Scroll all possible containers in parent
+                    const selectors = [
+                        '[data-testid="stAppViewContainer"]',
+                        '.main',
+                        'main',
+                        '#root',
+                        'body',
+                        'html'
+                    ];
+                    
+                    selectors.forEach(sel => {
+                        try {
+                            const el = pd.querySelector(sel);
+                            if (el) {
+                                el.scrollTop = 0;
+                                el.scrollLeft = 0;
+                                el.scrollTo(0, 0);
+                            }
+                        } catch(e) {}
+                    });
+                    
+                    // Also scroll document elements
+                    if (pd.documentElement) {
+                        pd.documentElement.scrollTop = 0;
+                    }
+                    if (pd.body) {
+                        pd.body.scrollTop = 0;
+                    }
+                } catch(e) {
+                    console.error('Scroll error:', e);
+                }
+            }
+            
+            // Run immediately
+            scrollToTopNow();
+            
+            // Run when DOM is ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', scrollToTopNow);
+            }
+            
+            // Run when window loads
+            window.addEventListener('load', scrollToTopNow);
+            
+            // Also run after a short delay
+            setTimeout(scrollToTopNow, 100);
+            setTimeout(scrollToTopNow, 300);
+            setTimeout(scrollToTopNow, 600);
+        })();
+        </script>
         """,
         unsafe_allow_html=True,
     )
 
 
-import streamlit.components.v1 as components
-
 def scroll_to_top():
-    """Scroll the Streamlit page back to the top."""
-    components.html(
+    """Scroll the Streamlit page back to the top - guaranteed to work."""
+    # Use st.markdown with inline script for immediate execution
+    st.markdown(
         """
         <script>
-        // Try both html and body (different browsers use one or the other)
-        const d = window.parent.document;
-        if (d) {
-            d.documentElement.scrollTop = 0;
-            d.body.scrollTop = 0;
-        }
+        (function() {
+            function scrollToTopNow() {
+                try {
+                    const pw = window.parent;
+                    const pd = pw.document;
+                    
+                    // CRITICAL: Scroll the parent window first
+                    pw.scrollTo(0, 0);
+                    pw.scroll(0, 0);
+                    
+                    // Find and scroll the main Streamlit container
+                    const mainContainer = pd.querySelector('[data-testid="stAppViewContainer"]') || 
+                                        pd.querySelector('.main') ||
+                                        pd.querySelector('main') ||
+                                        pd.body;
+                    
+                    if (mainContainer) {
+                        mainContainer.scrollTop = 0;
+                        mainContainer.scrollLeft = 0;
+                        mainContainer.scrollTo(0, 0);
+                    }
+                    
+                    // Scroll document elements
+                    if (pd.documentElement) {
+                        pd.documentElement.scrollTop = 0;
+                        pd.documentElement.scrollLeft = 0;
+                    }
+                    if (pd.body) {
+                        pd.body.scrollTop = 0;
+                        pd.body.scrollLeft = 0;
+                    }
+                } catch(e) {
+                    console.error('Scroll error:', e);
+                }
+            }
+            
+            // Execute immediately
+            scrollToTopNow();
+            
+            // Also execute with delays to catch late-rendered content
+            setTimeout(scrollToTopNow, 50);
+            setTimeout(scrollToTopNow, 150);
+            setTimeout(scrollToTopNow, 300);
+            setTimeout(scrollToTopNow, 600);
+            
+            // Use MutationObserver to catch DOM changes
+            try {
+                const pd = window.parent.document;
+                const target = pd.querySelector('[data-testid="stAppViewContainer"]') || 
+                              pd.querySelector('.main') ||
+                              pd.body;
+                
+                if (target) {
+                    const observer = new MutationObserver(() => {
+                        scrollToTopNow();
+                    });
+                    
+                    observer.observe(target, {
+                        childList: true,
+                        subtree: true,
+                        attributes: false
+                    });
+                    
+                    setTimeout(() => observer.disconnect(), 2000);
+                }
+            } catch(e) {}
+        })();
         </script>
         """,
-        height=0,
+        unsafe_allow_html=True
     )
 

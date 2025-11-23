@@ -55,38 +55,31 @@ FEMALE_BIOS = [
     "I appreciate kindness, clear communication, and emotional maturity. Let’s build something meaningful if the connection is right.",
 ]
 
-AGES = ["24", "25", "26", "27", "28", "29", "30", "31"]
-RACES = ["White", "Black", "Asian", "Latino", "Mixed", "Other"]
-
-ACTIVITY_POOL = [
-    "Never smoking",
-    "Occasionally smoking",
-    "Regularly smoking",
-    "Never drinking",
-    "Socially drinking",
-    "Regularly drinking",
-    "Hiking",
-    "Movies",
-    "Cooking",
-    "Tech",
-    "Art",
-    "Travel",
+MALE_FIXED_CHOICES = [
+    {"age": "24", "race": "White", "activities": ["Never smoking", "Socially drinking", "Hiking", "Tech"]},
+    {"age": "25", "race": "Black", "activities": ["Occasionally smoking", "Socially drinking", "Movies", "Cooking"]},
+    {"age": "26", "race": "Asian", "activities": ["Never smoking", "Never drinking", "Hiking", "Art", "Travel"]},
+    {"age": "27", "race": "Latino", "activities": ["Never smoking", "Regularly drinking", "Movies", "Cooking", "Tech"]},
+    {"age": "28", "race": "White", "activities": ["Occasionally smoking", "Socially drinking", "Hiking", "Travel"]},
+    {"age": "29", "race": "Mixed Race", "activities": ["Never smoking", "Never drinking", "Movies", "Art"]},
+    {"age": "30", "race": "Black", "activities": ["Regularly smoking", "Socially drinking", "Cooking", "Tech", "Travel"]},
+    {"age": "31", "race": "Asian", "activities": ["Never smoking", "Socially drinking", "Hiking", "Movies", "Art"]},
+    {"age": "24", "race": "Latino", "activities": ["Occasionally smoking", "Regularly drinking", "Tech", "Travel"]},
+    {"age": "25", "race": "Other", "activities": ["Never smoking", "Never drinking", "Hiking", "Cooking", "Art"]},
 ]
 
-def _generate_fixed_choice():
-    """Return a fixed-choice dict for a single profile."""
-    age = random.choice(AGES)
-    race = random.choice(RACES)
-
-    # choose 3–4 distinct activities
-    num_acts = random.choice([3, 4])
-    activities = random.sample(ACTIVITY_POOL, num_acts)
-
-    return {
-        "age": age,
-        "race": race,
-        "activities": activities,
-    }
+FEMALE_FIXED_CHOICES = [
+    {"age": "24", "race": "White", "activities": ["Never smoking", "Socially drinking", "Movies", "Art", "Travel"]},
+    {"age": "25", "race": "Black", "activities": ["Never smoking", "Never drinking", "Hiking", "Cooking"]},
+    {"age": "26", "race": "Asian", "activities": ["Occasionally smoking", "Socially drinking", "Movies", "Tech"]},
+    {"age": "27", "race": "Latino", "activities": ["Never smoking", "Socially drinking", "Cooking", "Art", "Travel"]},
+    {"age": "28", "race": "White", "activities": ["Never smoking", "Never drinking", "Hiking", "Movies", "Tech"]},
+    {"age": "29", "race": "Mixed Race", "activities": ["Occasionally smoking", "Socially drinking", "Art", "Travel"]},
+    {"age": "30", "race": "Black", "activities": ["Never smoking", "Regularly drinking", "Movies", "Cooking", "Tech"]},
+    {"age": "31", "race": "Asian", "activities": ["Never smoking", "Socially drinking", "Hiking", "Art"]},
+    {"age": "24", "race": "Latino", "activities": ["Occasionally smoking", "Never drinking", "Cooking", "Travel"]},
+    {"age": "25", "race": "Other", "activities": ["Never smoking", "Socially drinking", "Movies", "Tech", "Art"]},
+]
 
 
 def build_profiles(attraction_preference: str):
@@ -104,7 +97,7 @@ def build_profiles(attraction_preference: str):
             "gender": "man",
             "image_url": MALE_IMAGE_URLS[i],
             "bio": MALE_BIOS[i],
-            "fixed_choice": _generate_fixed_choice(),
+            "fixed_choice": MALE_FIXED_CHOICES[i],
         }
         for i in range(10)
     ]
@@ -115,7 +108,7 @@ def build_profiles(attraction_preference: str):
             "gender": "woman",
             "image_url": FEMALE_IMAGE_URLS[i],
             "bio": FEMALE_BIOS[i],
-            "fixed_choice": _generate_fixed_choice(),
+            "fixed_choice": FEMALE_FIXED_CHOICES[i],
         }
         for i in range(10)
     ]
