@@ -1,10 +1,11 @@
 import streamlit as st
 import random
 from datetime import datetime
+import time
 
 from stimuly import build_profiles, NUM_PROFILES_PER_PARTICIPANT
 from sheets_utils import append_response_to_sheet
-from ui_helpers import apply_global_styles, scroll_to_top, render_profile_card
+from ui_helpers import apply_global_styles, scroll_to_top, render_profile_card, render_progress_bar
 
 st.set_page_config(
     page_title="Dating Profile Study",
@@ -28,6 +29,8 @@ def init_session():
         st.session_state.responses = []
     if "should_scroll" not in st.session_state:
         st.session_state.should_scroll = False
+    if "start_time" not in st.session_state:
+        st.session_state.start_time = None
 
 init_session()
 
@@ -48,12 +51,16 @@ def consent_screen():
 
     - Takes **5–10 minutes**  
     - **Anonymous** & **voluntary**  
+    - You can stop at any time
     """)
+    
+    st.markdown("---")
 
     agree = st.checkbox("I agree to participate.")
-    if agree and st.button("Start the study"):
+    if agree and st.button("Start the study", type="primary"):
         unique_id = f"PID_{int(datetime.utcnow().timestamp())}_{random.randint(1000, 9999)}"
         st.session_state.participant_id = unique_id
+        st.session_state.start_time = datetime.utcnow()
         st.rerun()
 
     st.stop()
@@ -66,78 +73,93 @@ def demographics_screen():
 
     st.markdown('<div class="section-header">A few quick questions</div>', unsafe_allow_html=True)
 
-    age = st.number_input("Age", min_value=18, max_value=99, value=24)
+    age = st.number_input("Age", min_value=18, max_value=99, value=24, help="You must be 18 or older to participate")
     gender = st.selectbox("Your gender", ["Prefer not to say", "Woman", "Man", "Non-binary", "Other"])
-    attraction = st.selectbox("You are usually attracted to:", ["Men", "Women", "Both"])
+    attraction = st.selectbox("You are usually attracted to:", ["Men", "Women", "Both"], help="This helps us show you relevant profiles")
 
-    if st.button("Continue to profiles"):
-        st.session_state.demographics = {
-            "age": int(age),
-            "gender": gender,
-            "attraction": attraction,
-        }
+    if st.button("Continue to profiles", type="primary"):
+        with st.spinner("Preparing profiles..."):
+            st.session_state.demographics = {
+                "age": int(age),
+                "gender": gender,
+                "attraction": attraction,
+            }
 
-        # Build profiles with fixed-choice attributes
-        profiles = build_profiles(attraction)
-        chosen = random.sample(profiles, NUM_PROFILES_PER_PARTICIPANT)
+            # Build profiles with fixed-choice attributes
+            profiles = build_profiles(attraction)
+            chosen = random.sample(profiles, NUM_PROFILES_PER_PARTICIPANT)
 
-        # Assign 50/50 control/treatment
-        conditions = ["control"] * 5 + ["ai_disclosed"] * 5
-        random.shuffle(conditions)
+            # Assign 50/50 control/treatment
+            conditions = ["control"] * 5 + ["ai_disclosed"] * 5
+            random.shuffle(conditions)
 
-        stimulus_list = []
-        for prof, cond in zip(chosen, conditions):
-            stimulus_list.append(
-                {
-                    "profile_id": prof["profile_id"],
-                    "image_url": prof["image_url"],
-                    "bio": prof["bio"],
-                    "fixed_choice": prof["fixed_choice"],   # <-- IMPORTANT
-                    "condition": cond,
-                }
-            )
+            stimulus_list = []
+            for prof, cond in zip(chosen, conditions):
+                stimulus_list.append(
+                    {
+                        "profile_id": prof["profile_id"],
+                        "image_url": prof["image_url"],
+                        "bio": prof["bio"],
+                        "fixed_choice": prof["fixed_choice"],   # <-- IMPORTANT
+                        "condition": cond,
+                    }
+                )
 
-        random.shuffle(stimulus_list)
-        st.session_state.stimulus_list = stimulus_list
-        st.session_state.current_index = 0
-        st.rerun()
+            random.shuffle(stimulus_list)
+            st.session_state.stimulus_list = stimulus_list
+            st.session_state.current_index = 0
+            time.sleep(0.5)  # Brief delay for better UX
+            st.rerun()
 
     st.stop()
 
 
 # ---------- Attention Check ----------
 def attention_check_step():
-    st.markdown("### Attention Check ⚠️")
-    st.write("Please choose **3** for all answers below.")
-    
-    # Always scroll to top after content is rendered
     scroll_to_top()
+    
+    st.markdown("### Attention Check ⚠️")
+    st.markdown("""
+    <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
+        <p style="margin: 0; color: #92400e;">
+            <strong>Important:</strong> Please choose <strong>3</strong> for all three answers below.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
     att1 = st.slider("Attractiveness", 0, 4, 2, key="attn_attr")
     att2 = st.slider("Authenticity",   0, 4, 2, key="attn_auth")
     att3 = st.slider("Desirability",   0, 4, 2, key="attn_desi")
 
-    if st.button("Next"):
-        response = {
-            "timestamp": datetime.utcnow().isoformat(),
-            "participant_id": st.session_state.participant_id,
-            "age": st.session_state.demographics["age"],
-            "gender": st.session_state.demographics["gender"],
-            "attraction": st.session_state.demographics["attraction"],
-            "profile_id": "attention_check",
-            "condition": "attention_check",
-            "attractiveness": att1,
-            "authenticity": att2,
-            "desirability": att3,
-            "attention_check": True,
-            "attention_correct": (att1 == 3 and att2 == 3 and att3 == 3),
-        }
-        st.session_state.responses.append(response)
-        append_response_to_sheet(response)
+    if st.button("Next", type="primary"):
+        is_correct = (att1 == 3 and att2 == 3 and att3 == 3)
+        
+        if not is_correct:
+            st.warning("⚠️ Please remember: for this attention check, choose **3** for all answers.")
+            st.stop()
+        
+        with st.spinner("Saving response..."):
+            response = {
+                "timestamp": datetime.utcnow().isoformat(),
+                "participant_id": st.session_state.participant_id,
+                "age": st.session_state.demographics["age"],
+                "gender": st.session_state.demographics["gender"],
+                "attraction": st.session_state.demographics["attraction"],
+                "profile_id": "attention_check",
+                "condition": "attention_check",
+                "attractiveness": att1,
+                "authenticity": att2,
+                "desirability": att3,
+                "attention_check": True,
+                "attention_correct": is_correct,
+            }
+            st.session_state.responses.append(response)
+            append_response_to_sheet(response)
 
-        st.session_state.current_index += 1
-        st.session_state.should_scroll = True
-        st.rerun()
+            st.session_state.current_index += 1
+            st.session_state.should_scroll = True
+            time.sleep(0.3)
+            st.rerun()
 
     st.stop()
 
@@ -148,9 +170,12 @@ def profile_step(idx: int, stimuli, total_profiles: int):
     scroll_to_top()
     
     current = stimuli[idx]
+    
+    # Progress bar
+    render_progress_bar(idx + 1, total_profiles)
 
     # Header
-    st.markdown(f"**Profile {idx + 1} of {total_profiles}**")
+    st.markdown(f"### Profile {idx + 1} of {total_profiles}")
 
     # ---- Render full card including fixed-choice ----
     render_profile_card(current)
@@ -161,32 +186,36 @@ def profile_step(idx: int, stimuli, total_profiles: int):
     # ---- Rating sliders ----
     st.markdown('<div class="rating-title">Rate this profile</div>', unsafe_allow_html=True)
 
-    attr = st.slider("Attractiveness", 0, 4, 2, key=f"attr_{idx}")
-    auth = st.slider("Authenticity",   0, 4, 2, key=f"auth_{idx}")
-    desi = st.slider("Desirability",   0, 4, 2, key=f"desi_{idx}")
+    attr = st.slider("Attractiveness", 0, 4, 2, key=f"attr_{idx}", help="How attractive do you find this person?")
+    auth = st.slider("Authenticity",   0, 4, 2, key=f"auth_{idx}", help="How authentic does this profile seem?")
+    desi = st.slider("Desirability",   0, 4, 2, key=f"desi_{idx}", help="How desirable is this person as a potential match?")
 
-    if st.button("Next"):
-        row = {
-            "timestamp": datetime.utcnow().isoformat(),
-            "participant_id": st.session_state.participant_id,
-            "age": st.session_state.demographics["age"],
-            "gender": st.session_state.demographics["gender"],
-            "attraction": st.session_state.demographics["attraction"],
-            "profile_id": current["profile_id"],
-            "condition": current["condition"],
-            "attractiveness": attr,
-            "authenticity": auth,
-            "desirability": desi,
-            "attention_check": False,
-            "attention_correct": "",
-        }
+    col1, col2 = st.columns([1, 4])
+    with col2:
+        if st.button("Next Profile →", type="primary", use_container_width=True):
+            with st.spinner("Saving..."):
+                row = {
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "participant_id": st.session_state.participant_id,
+                    "age": st.session_state.demographics["age"],
+                    "gender": st.session_state.demographics["gender"],
+                    "attraction": st.session_state.demographics["attraction"],
+                    "profile_id": current["profile_id"],
+                    "condition": current["condition"],
+                    "attractiveness": attr,
+                    "authenticity": auth,
+                    "desirability": desi,
+                    "attention_check": False,
+                    "attention_correct": "",
+                }
 
-        st.session_state.responses.append(row)
-        append_response_to_sheet(row)
+                st.session_state.responses.append(row)
+                append_response_to_sheet(row)
 
-        st.session_state.current_index += 1
-        st.session_state.should_scroll = True
-        st.rerun()
+                st.session_state.current_index += 1
+                st.session_state.should_scroll = True
+                time.sleep(0.3)
+                st.rerun()
 
 
 # ---------- Experiment Flow ----------
@@ -195,14 +224,18 @@ def main_experiment():
     idx = st.session_state.current_index
 
     if not stimuli:
-        st.error("No stimuli found.")
+        st.error("❌ No profiles found. Please refresh the page and try again.")
+        if st.button("Restart Study"):
+            for key in list(st.session_state.keys()):
+                del st.session_state[key]
+            st.rerun()
         st.stop()
 
     total = len(stimuli)
     total_steps = total + 1
 
     if idx >= total_steps:
-        st.success("All done! Thank you 🙏")
+        completion_screen()
         st.stop()
 
     if idx == 3:
@@ -211,6 +244,35 @@ def main_experiment():
         profile_step(idx, stimuli, total)
     else:
         profile_step(idx - 1, stimuli, total)
+
+
+# ---------- Completion Screen ----------
+def completion_screen():
+    scroll_to_top()
+    st.markdown('<div class="big-title">Thank You! 🙏</div>', unsafe_allow_html=True)
+    
+    st.markdown("""
+    <div style="background: #f0f9ff; border-left: 4px solid #3b82f6; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
+        <p style="margin: 0; font-size: 1.1rem; color: #1e40af;">
+            <strong>Your responses have been recorded.</strong>
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    if st.session_state.start_time:
+        duration = (datetime.utcnow() - st.session_state.start_time).total_seconds()
+        minutes = int(duration // 60)
+        seconds = int(duration % 60)
+        st.info(f"⏱️ You completed the study in {minutes} minutes and {seconds} seconds.")
+    
+    st.markdown("""
+    ### What's Next?
+    - Your anonymous responses will be used for research purposes only
+    - You can close this window at any time
+    - Thank you for your participation!
+    """)
+    
+    st.balloons()
 
 
 # ---------- Main ----------

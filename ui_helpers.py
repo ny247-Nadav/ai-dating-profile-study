@@ -31,23 +31,28 @@ def render_profile_card(profile: dict) -> None:
     ai_html = ""
     if profile.get("condition") == "ai_disclosed":
         ai_html = "<div class='ai-label'>🤖 Profile includes AI enhancements</div>"
-    elif profile.get("condition") == "control":
-        ai_html = "<div class='ai-label'></div>"
-        ai_html = "<div></div>"
-
 
     # Bio
     bio = profile.get("bio", "")
 
-    # *** CRITICAL FIX ***
-    # NO newline before <div ...>
-    # NO indentation anywhere in the HTML block
-    card_html = f"""<div class="profile-card">
-    {image_html}
-    {ai_html}
-    {chips_html}
-    <div class="profile-bio-text">{bio}</div>
-    </div>"""
+    # Build HTML components list to avoid empty string issues
+    html_parts = ['<div class="profile-card">']
+    
+    if image_html:
+        html_parts.append(image_html)
+    
+    if ai_html:
+        html_parts.append(ai_html)
+    
+    if chips_html:
+        html_parts.append(chips_html)
+    
+    # Bio is always included
+    html_parts.append(f'<div class="profile-bio-text">{bio}</div>')
+    html_parts.append('</div>')
+    
+    # Join without extra whitespace
+    card_html = "".join(html_parts)
 
     # Render safely
     st.markdown(card_html, unsafe_allow_html=True)
@@ -87,6 +92,19 @@ def apply_global_styles() -> None:
         body {
             background: #f3f4f6;
         }
+        
+        /* Improve accessibility - focus states */
+        button:focus-visible,
+        input:focus-visible,
+        select:focus-visible {
+            outline: 2px solid #6366f1;
+            outline-offset: 2px;
+        }
+        
+        /* Better spacing for form elements */
+        .element-container {
+            margin-bottom: 1rem;
+        }
 
         .big-title {
             font-size: 32px;
@@ -100,6 +118,13 @@ def apply_global_styles() -> None:
             font-weight: 600;
             margin-top: 1.5rem;
             margin-bottom: 0.75rem;
+        }
+        
+        h3 {
+            color: #1f2937;
+            font-weight: 600;
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
         }
 
         .rating-title {
@@ -118,6 +143,14 @@ def apply_global_styles() -> None:
                 0 14px 30px rgba(15, 23, 42, 0.08),
                 0 0 0 1px rgba(148, 163, 184, 0.25);
             margin-bottom: 1.5rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .profile-card:hover {
+            transform: translateY(-2px);
+            box-shadow:
+                0 20px 40px rgba(15, 23, 42, 0.12),
+                0 0 0 1px rgba(148, 163, 184, 0.3);
         }
 
         .profile-photo {
@@ -188,16 +221,60 @@ def apply_global_styles() -> None:
             border-radius: 999px;
             padding: 0.45rem 1.6rem;
             font-weight: 600;
+            transition: all 0.2s ease;
+        }
+        
+        .stButton > button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+        
+        .stButton > button[kind="primary"] {
+            background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);
+            border: none;
         }
 
         /* -------- Sliders: make the track a bit nicer -------- */
         /* WebKit browsers */
         input[type="range"]::-webkit-slider-thumb {
             background: #6366f1;
+            width: 18px;
+            height: 18px;
+            border: 2px solid #ffffff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
         }
         input[type="range"]::-webkit-slider-runnable-track {
             height: 6px;
             border-radius: 999px;
+            background: #e5e7eb;
+        }
+        
+        input[type="range"]::-moz-range-thumb {
+            background: #6366f1;
+            width: 18px;
+            height: 18px;
+            border: 2px solid #ffffff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            border-radius: 50%;
+        }
+        
+        input[type="range"]::-moz-range-track {
+            height: 6px;
+            border-radius: 999px;
+            background: #e5e7eb;
+        }
+        
+        /* Slider labels */
+        .stSlider label {
+            font-weight: 500;
+            color: #374151;
+        }
+        
+        /* Info tooltips */
+        .stTooltip {
+            color: #6b7280;
         }
         </style>
         <script>
@@ -265,6 +342,27 @@ def apply_global_styles() -> None:
         </script>
         """,
         unsafe_allow_html=True,
+    )
+
+
+def render_progress_bar(current: int, total: int) -> None:
+    """Render a visual progress bar showing study completion."""
+    progress = current / total
+    percentage = int(progress * 100)
+    
+    st.markdown(
+        f"""
+        <div style="margin-bottom: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                <span style="font-size: 0.9rem; color: #6b7280; font-weight: 500;">Progress</span>
+                <span style="font-size: 0.9rem; color: #6b7280; font-weight: 600;">{percentage}%</span>
+            </div>
+            <div style="background: #e5e7eb; border-radius: 999px; height: 8px; overflow: hidden;">
+                <div style="background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%); height: 100%; width: {percentage}%; transition: width 0.3s ease;"></div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
     )
 
 
