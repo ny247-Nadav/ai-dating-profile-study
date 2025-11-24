@@ -58,29 +58,29 @@ FEMALE_BIOS = [
 ]
 
 MALE_FIXED_CHOICES = [
-    {"age": "24", "race": "White", "activities": ["Never smoking", "Socially drinking", "Tech"]},  # Golf, business, networking
-    {"age": "25", "race": "Black", "activities": ["Occasionally smoking", "Socially drinking", "Hiking"]},  # Active, adventure sports
-    {"age": "26", "race": "Asian", "activities": ["Never smoking", "Never drinking", "Cooking"]},  # Great food, cooking
-    {"age": "27", "race": "Latino", "activities": ["Never smoking", "Regularly drinking", "Travel"]},  # Traveling, exploring
-    {"age": "28", "race": "White", "activities": ["Occasionally smoking", "Socially drinking", "Travel"]},  # Traveling, social events
-    {"age": "29", "race": "Mixed Race", "activities": ["Never smoking", "Never drinking", "Cooking"]},  # Foodie, restaurants
-    {"age": "30", "race": "Black", "activities": ["Regularly smoking", "Socially drinking", "Movies"]},  # Sports, movies, stories
-    {"age": "31", "race": "Asian", "activities": ["Never smoking", "Socially drinking", "Hiking", "Art"]},  # Hiking, art galleries
-    {"age": "24", "race": "Latino", "activities": ["Occasionally smoking", "Regularly drinking", "Cooking", "Movies"]},  # Cooking, movies, conversations
-    {"age": "25", "race": "Other", "activities": ["Never smoking", "Never drinking", "Tech"]},  # Tech enthusiast
+    {"age": "24", "race": "Latino", "activities": ["Never smoking", "Socially drinking", "Tech", "Enturpenership", "Networking", "Golf"]},  # Golf, business, networking
+    {"age": "29", "race": "Black", "activities": ["Occasionally smoking", "Socially drinking", "Hiking", "Movies", "Adventure Sports", "Rock Climbing"]},  # Active, adventure sports
+    {"age": "26", "race": "white", "activities": ["Never smoking", "Never drinking", "Cooking", "Food Blogging", "Restaurant Hopping"]},  # Great food, cooking
+    {"age": "27", "race": "Mixed Race", "activities": ["Never smoking", "Regularly drinking", "Travel", "Basketball", "Photography", "Backpacking"]},  # Traveling, exploring
+    {"age": "28", "race": "Asian", "activities": ["Occasionally smoking", "Socially drinking", "Travel", "Reading", "Language Learning", "Cultural Events"]},  # Traveling, social events
+    {"age": "29", "race": "Mixed Race", "activities": ["Never smoking", "Never drinking", "Cooking", "Wine Tasting", "Farmers Markets"]},  # Foodie, restaurants
+    {"age": "30", "race": "White", "activities": ["Regularly smoking", "Socially drinking", "Buissness", "Sport", "Movies", "Book Clubs"]},  # Sports, movies, stories
+    {"age": "31", "race": "Black", "activities": ["Never smoking", "Socially drinking", "Hiking", "Art", "Galleries", "Museums", "Yoga"]},  # Hiking, art galleries
+    {"age": "24", "race": "White", "activities": ["Occasionally smoking", "Regularly drinking", "Cooking", "Movies", "Board Games", "Podcasts"]},  # Cooking, movies, conversations
+    {"age": "25", "race": "Other", "activities": ["Never smoking", "Never drinking", "Tech", "Coding", "Gaming", "Startups"]},  # Tech enthusiast
 ]
 
 FEMALE_FIXED_CHOICES = [
-    {"age": "24", "race": "White", "activities": ["Never smoking", "Socially drinking", "Travel"]},  # Discovering new places, travel
-    {"age": "25", "race": "Black", "activities": ["Never smoking", "Never drinking", "Hiking", "Cooking"]},  # Long walks, hiking, new foods
-    {"age": "26", "race": "Asian", "activities": ["Occasionally smoking", "Socially drinking", "Movies", "Art"]},  # Good music, art galleries, movies
-    {"age": "27", "race": "Latino", "activities": ["Never smoking", "Socially drinking", "Cooking", "Art", "Travel"]},  # New experiences, art, cuisines, travel
-    {"age": "28", "race": "White", "activities": ["Never smoking", "Never drinking", "Hiking"]},  # Coffee, walks, hiking
-    {"age": "29", "race": "Mixed Race", "activities": ["Occasionally smoking", "Socially drinking", "Tech", "Movies"]},  # Learning, exploring, tech, movies
-    {"age": "30", "race": "Black", "activities": ["Never smoking", "Regularly drinking", "Cooking", "Movies"]},  # Family, cooking, movies
-    {"age": "31", "race": "Asian", "activities": ["Never smoking", "Socially drinking", "Cooking", "Travel"]},  # Travel, culture, cuisines
-    {"age": "24", "race": "Latino", "activities": ["Occasionally smoking", "Never drinking", "Cooking", "Art"]},  # Cooking, art, conversations
-    {"age": "25", "race": "Other", "activities": ["Never smoking", "Socially drinking", "Tech", "Movies", "Art"]},  # Tech, movies, art
+    {"age": "24", "race": "White", "activities": ["Never smoking", "Socially drinking", "Travel", "Photography", "Solo Trips"]},  # Discovering new places, travel
+    {"age": "25", "race": "Black", "activities": ["Never smoking", "Never drinking", "Hiking", "Cooking", "Meal Prep", "Nature Walks"]},  # Long walks, hiking, new foods
+    {"age": "26", "race": "Asian", "activities": ["Occasionally smoking", "Socially drinking", "Movies", "Art", "Music Festivals", "Concerts"]},  # Good music, art galleries, movies
+    {"age": "27", "race": "Latino", "activities": ["Never smoking", "Socially drinking", "Cooking", "Art", "Travel", "Dance Classes", "Food Tours"]},  # New experiences, art, cuisines, travel
+    {"age": "28", "race": "White", "activities": ["Never smoking", "Never drinking", "Hiking", "Coffee Shops", "Meditation", "Journaling"]},  # Coffee, walks, hiking
+    {"age": "29", "race": "Mixed Race", "activities": ["Occasionally smoking", "Socially drinking", "Tech", "Movies", "Online Courses", "Documentaries"]},  # Learning, exploring, tech, movies
+    {"age": "30", "race": "White", "activities": ["Never smoking", "Regularly drinking", "Cooking", "Movies", "Family Time", "Potlucks"]},  # Family, cooking, movies
+    {"age": "31", "race": "Mixed Race", "activities": ["Never smoking", "Socially drinking", "Cooking", "Travel", "Cultural Cooking", "Street Food"]},  # Travel, culture, cuisines
+    {"age": "24", "race": "Latino", "activities": ["Occasionally smoking", "Never drinking", "Cooking", "Art", "Painting", "Deep Conversations"]},  # Cooking, art, conversations
+    {"age": "25", "race": "Other", "activities": ["Never smoking", "Socially drinking", "Tech", "Movies", "Art", "VR Gaming", "Digital Art"]},  # Tech, movies, art
 ]
 
 

@@ -47,18 +47,6 @@ streamlit run app.py
 - `sheets_utils.py` - Google Sheets integration for data logging
 - `requirements.txt` - Python dependencies
 
-## Improvements Made
-
-- ✅ Fixed code quality issues (duplicate imports, typos, unused code)
-- ✅ Added visual progress bar
-- ✅ Enhanced error handling and validation
-- ✅ Improved completion screen with timing information
-- ✅ Added loading states and user feedback
-- ✅ Enhanced UI styling with hover effects and animations
-- ✅ Better accessibility (focus states, tooltips)
-- ✅ Improved attention check with validation
-- ✅ Better button styling and user guidance
-
 ## Data Collection
 
 Responses are automatically logged to Google Sheets (when configured) with the following fields:
