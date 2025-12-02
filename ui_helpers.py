@@ -30,7 +30,7 @@ def render_profile_card(profile: dict) -> None:
     # AI disclosure
     ai_html = ""
     if profile.get("condition") == "ai_disclosed":
-        ai_html = "<div class='ai-label'>🤖 Profile includes AI enhancements</div>"
+        ai_html = "<div class='ai-label'>🤖 I used AI to enhance this profile</div>"
 
     # Bio
     bio = profile.get("bio", "")
